@@ -163,3 +163,99 @@ class ExplanationEngine:
             "recommended_action": recommended_action
 
         }
+
+
+def generate_saliency_heatmap(payload, predict_function, target_class=None):
+    """
+    Generate character-level saliency scores using an Occlusion/Perturbation-based approach.
+
+    Parameters
+    ----------
+    payload : str
+        Incoming HTTP request, URL, or payload to analyze.
+    predict_function : callable
+        Prediction callable returning model predictions or probability distributions.
+    target_class : str, optional
+        Target attack class to measure confidence drops against.
+
+    Returns
+    -------
+    list of tuple
+        A list of (character/chunk, importance_score) tuples with scores normalized between 0.0 and 1.0.
+        Returns an empty list [] on any tensor, array, or runtime mismatch.
+    """
+    try:
+        if not payload or not isinstance(payload, str) or not callable(predict_function):
+            return []
+
+        def _extract_target_probability(output, target):
+            """Safely extracts target class probability from diverse model output formats."""
+            if output is None:
+                return 0.0
+            if isinstance(output, (float, int)):
+                return float(output)
+
+            # Dictionary format (e.g. {"SQL Injection": 0.98, "Normal": 0.02})
+            if isinstance(output, dict):
+                if target and target in output:
+                    return float(output[target])
+                if target:
+                    target_lower = str(target).strip().lower()
+                    for k, v in output.items():
+                        if str(k).strip().lower() == target_lower:
+                            return float(v)
+                if output:
+                    return float(max(output.values()))
+                return 0.0
+
+            # Tuple/List format (e.g. (attack_type, confidence, probabilities_dict))
+            if isinstance(output, (tuple, list)):
+                for item in output:
+                    if isinstance(item, dict):
+                        return _extract_target_probability(item, target)
+                if len(output) >= 2 and isinstance(output[1], (float, int)):
+                    label, conf = output[0], output[1]
+                    if target is None or str(label).strip().lower() == str(target).strip().lower():
+                        return float(conf)
+                    return 0.0
+                if len(output) >= 1 and isinstance(output[0], (float, int)):
+                    return float(output[0])
+
+            return 0.0
+
+        # Baseline model prediction
+        base_output = predict_function(payload)
+
+        # Infer target class if not explicitly provided
+        if target_class is None:
+            if isinstance(base_output, (tuple, list)) and len(base_output) > 0 and isinstance(base_output[0], str):
+                target_class = base_output[0]
+            elif isinstance(base_output, dict) and base_output:
+                target_class = max(base_output.items(), key=lambda x: x[1])[0]
+
+        base_confidence = _extract_target_probability(base_output, target_class)
+
+        raw_drops = []
+        for i in range(len(payload)):
+            # Occlusion: mask out character i
+            masked_payload = payload[:i] + payload[i + 1:]
+            perturbed_output = predict_function(masked_payload)
+            perturbed_confidence = _extract_target_probability(perturbed_output, target_class)
+
+            # Measure drop in confidence for the target class
+            confidence_drop = max(0.0, base_confidence - perturbed_confidence)
+            raw_drops.append((payload[i], confidence_drop))
+
+        # Normalize confidence drops to [0.0, 1.0] range
+        max_drop = max([drop for _, drop in raw_drops], default=0.0)
+
+        if max_drop > 0.0:
+            saliency_scores = [(char, round(drop / max_drop, 4)) for char, drop in raw_drops]
+        else:
+            saliency_scores = [(char, 0.0) for char, _ in raw_drops]
+
+        return saliency_scores
+
+    except Exception:
+        # Guarantee non-destructive behavior: never crash caller
+        return []

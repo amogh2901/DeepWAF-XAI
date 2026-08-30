@@ -2,10 +2,15 @@ import sqlite3
 import os
 import logging
 from datetime import datetime
+from src.db_firewall import DBFirewall
+from src.sanitizer import sanitize_payload
 
 
 # Set up a logger for the module
 logger = logging.getLogger(__name__)
+
+# Module-level DB Firewall instance – intercepts INSERT queries before execution
+db_fw = DBFirewall()
 
 def log_attack(
     request,
@@ -60,9 +65,9 @@ def log_attack(
                     except sqlite3.Error as e:
                         logger.error(f"Error adding column {column_name}: {e}")
 
-            # Insert the attack log with all parameters
+            # Route the INSERT through the DB Firewall
             timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            cursor.execute("""
+            insert_query = """
                 INSERT INTO attack_logs (
                     timestamp,
                     request,
@@ -72,22 +77,29 @@ def log_attack(
                     threat_score,
                     prediction_time_ms
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (
+            """
+            # Sanitize the raw request string before persisting to the DB.
+            # IMPORTANT: The BiLSTM model already received the raw payload
+            # upstream (in app.py) before log_attack() was called, so
+            # sanitization here does NOT affect detection accuracy.
+            safe_request = sanitize_payload(request)
+
+            insert_params = (
                 timestamp_str,
-                request,
+                safe_request,   # sanitized copy stored in DB
                 attack_type,
                 confidence,
                 severity,
                 threat_score,
                 prediction_time_ms
-            ))
+            )
+            success, message = db_fw.execute_safe_query(insert_query, insert_params)
+            if not success:
+                logger.warning(f"DB Firewall blocked query: {message}")
+            else:
+                logger.info("Attack logged successfully.")
 
-            # Commit the transaction
-            conn.commit()
-
-            logger.info("Attack logged successfully.")
-
-        return True
+        return success
 
     except sqlite3.Error as e:
         # Log SQLite errors
