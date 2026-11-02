@@ -5,7 +5,8 @@
 
 # ── Core Deep Learning ──────────────────────────────────────────────────────
 tensorflow-cpu>=2.15.0,<3.0.0      # DL framework (CPU-optimized for cloud deployment)
-numpy>=1.24.0,<2.0.0               # Numerical computing
+numpy>=1.24.0,<2.0.0; python_version < "3.13" # Numerical computing (NumPy 1.x for Python <= 3.12)
+numpy>=2.1.0; python_version >= "3.13"        # Numerical computing (NumPy 2.x required for Python 3.13+)
 scipy>=1.11.0                       # Scientific computing (temperature scaling)
 
 # ── Data & ML Utilities ─────────────────────────────────────────────────────
