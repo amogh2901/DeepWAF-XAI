@@ -5,17 +5,19 @@ Enterprise Two-Factor Authentication (2FA) & One-Time Passcode (OTP) Service
 for DeepWAF-XAI.
 
 Designed for cloud environments (Streamlit Community Cloud) and local development.
-Supports:
-  1. RFC 6238 TOTP (Time-based One-Time Password - Google Authenticator / Authy)
+Supports two clearly separated production authentication channels plus local dev:
+  1. RFC 6238 TOTP (Time-based One-Time Password - Google Authenticator / Authy / Microsoft Authenticator)
+     - Validates against ADMIN_TOTP_SECRET (does NOT require or check SMTP)
   2. Authenticated SMTP Email Delivery (TLS/SSL)
+     - Validates against SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, ADMIN_EMAIL
   3. Local Developer Console Mode (explicitly gated via DEEPWAF_DEV_MODE=true)
 
 Security Properties:
-  - 5-minute (300-second) OTP expiration
+  - 5-minute (300-second) OTP expiration for dynamic codes
   - 30-second rate-limiting cooldown per operator
   - Max 3 invalid attempts before code revocation
   - Single-use consumption (immediate revocation upon success)
-  - Constant-time comparison to prevent timing side-channels
+  - Constant-time comparison (hmac.compare_digest) against timing side-channels
   - Strict secret hygiene (zero plaintext secrets/codes logged to stdout in production)
 """
 
@@ -30,7 +32,7 @@ import logging
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Tuple, Dict, Any, Optional
+from typing import Tuple, Dict, Any, Optional, List, Union
 
 logger = logging.getLogger(__name__)
 
@@ -39,73 +41,285 @@ logger = logging.getLogger(__name__)
 _ACTIVE_OTPS: Dict[str, Dict[str, Any]] = {}
 _LAST_REQUEST_TIME: Dict[str, float] = {}
 
-OTP_EXPIRY_SECONDS = 300      # 5 minutes validity
-OTP_COOLDOWN_SECONDS = 30     # 30 seconds rate-limit between requests
-MAX_VERIFICATION_ATTEMPTS = 3  # Revoke code after 3 wrong tries
+OTP_EXPIRY_SECONDS = 300       # 5 minutes validity for dynamic passcodes
+OTP_COOLDOWN_SECONDS = 30      # 30 seconds rate-limit between requests
+MAX_VERIFICATION_ATTEMPTS = 3  # Revoke dynamic code after 3 wrong tries
+
+# Secret key lookup aliases
+TOTP_SECRET_ALIASES = [
+    "ADMIN_TOTP_SECRET",
+    "TOTP_SECRET",
+    "ADMIN_2FA_SECRET",
+    "TWO_FACTOR_SECRET",
+    "DEEPWAF_ADMIN_TOTP_SECRET",
+    "ADMIN_TOTP_KEY",
+]
+
+SMTP_SERVER_ALIASES = ["SMTP_SERVER", "SMTP_HOST", "MAIL_SERVER"]
+SMTP_PORT_ALIASES = ["SMTP_PORT", "MAIL_PORT"]
+SMTP_USER_ALIASES = ["SMTP_USERNAME", "SMTP_EMAIL", "SMTP_USER", "MAIL_USERNAME"]
+SMTP_PASS_ALIASES = ["SMTP_PASSWORD", "SMTP_APP_PASSWORD", "SMTP_PASS", "MAIL_PASSWORD"]
+ADMIN_EMAIL_ALIASES = ["ADMIN_EMAIL", "ADMIN_NOTIFICATION_EMAIL", "ALERT_EMAIL", "SECURITY_ADMIN_EMAIL"]
 
 
-def _get_secret_or_env(key: str, default: Optional[str] = None) -> Optional[str]:
+def _clean_str(val: Any) -> Optional[str]:
+    """Clean string value by stripping surrounding quotes and whitespace."""
+    if val is None:
+        return None
+    s = str(val).strip()
+    if (s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'")):
+        s = s[1:-1].strip()
+    return s if s else None
+
+
+def _query_streamlit_secrets(candidate_keys: List[str]) -> Optional[str]:
     """
-    Safely retrieve configuration from Streamlit secrets (if available) or environment variables.
+    Safely query Streamlit Cloud Secrets supporting:
+      1. Direct key match (case-sensitive)
+      2. Case-insensitive top-level match
+      3. Nested sections (e.g. [auth], [secrets], [general], [deepwaf])
     """
-    # 1. Try Streamlit secrets if running inside Streamlit
     try:
         import streamlit as st
-        if hasattr(st, "secrets") and key in st.secrets:
-            val = str(st.secrets[key]).strip()
-            if val:
-                return val
+        if not hasattr(st, "secrets"):
+            return None
+        sec = st.secrets
+
+        # 1. Direct top-level match
+        for k in candidate_keys:
+            try:
+                if k in sec:
+                    cleaned = _clean_str(sec[k])
+                    if cleaned:
+                        return cleaned
+            except Exception:
+                pass
+
+        # 2. Case-insensitive top-level match
+        try:
+            sec_keys = list(sec.keys())
+            for ck in candidate_keys:
+                ck_lower = ck.lower()
+                for sk in sec_keys:
+                    if str(sk).lower() == ck_lower:
+                        cleaned = _clean_str(sec[sk])
+                        if cleaned:
+                            return cleaned
+        except Exception:
+            pass
+
+        # 3. Check nested sections in secrets (e.g., [auth] or [secrets])
+        try:
+            for sk in list(sec.keys()):
+                section_val = sec.get(sk)
+                if isinstance(section_val, dict) or hasattr(section_val, "get"):
+                    for ck in candidate_keys:
+                        # Direct key in section
+                        try:
+                            v = section_val.get(ck)
+                            cleaned = _clean_str(v)
+                            if cleaned:
+                                return cleaned
+                        except Exception:
+                            pass
+                        # Case-insensitive in section
+                        try:
+                            for sub_k in section_val.keys():
+                                if str(sub_k).lower() == ck.lower():
+                                    cleaned = _clean_str(section_val.get(sub_k))
+                                    if cleaned:
+                                        return cleaned
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+
     except Exception:
         pass
 
-    # 2. Try os.environ
-    val = os.getenv(key)
-    if val is not None and str(val).strip():
-        return str(val).strip()
+    return None
+
+
+def _query_local_secrets_toml(candidate_keys: List[str]) -> Optional[str]:
+    """Fallback reader for local .streamlit/secrets.toml if st.secrets is unavailable."""
+    paths = [
+        os.path.join(os.getcwd(), ".streamlit", "secrets.toml"),
+        os.path.join(os.path.expanduser("~"), ".streamlit", "secrets.toml")
+    ]
+    for p in paths:
+        if not os.path.isfile(p):
+            continue
+        try:
+            import toml
+            with open(p, "r", encoding="utf-8") as f:
+                data = toml.load(f)
+            # Check top level
+            for ck in candidate_keys:
+                if ck in data:
+                    cleaned = _clean_str(data[ck])
+                    if cleaned:
+                        return cleaned
+                for k, v in data.items():
+                    if k.lower() == ck.lower():
+                        cleaned = _clean_str(v)
+                        if cleaned:
+                            return cleaned
+                    if isinstance(v, dict):
+                        if ck in v:
+                            cleaned = _clean_str(v[ck])
+                            if cleaned:
+                                return cleaned
+                        for sub_k, sub_v in v.items():
+                            if sub_k.lower() == ck.lower():
+                                cleaned = _clean_str(sub_v)
+                                if cleaned:
+                                    return cleaned
+        except Exception:
+            pass
+    return None
+
+
+def get_config_secret(candidate_keys: Union[str, List[str]], default: Optional[str] = None) -> Optional[str]:
+    """
+    Safely retrieve secret configuration from:
+      1. Streamlit Cloud Secrets (top-level or nested, case-insensitive)
+      2. Environment variables (os.environ)
+      3. Local .streamlit/secrets.toml
+    """
+    if isinstance(candidate_keys, str):
+        keys = [candidate_keys]
+    else:
+        keys = list(candidate_keys)
+
+    # 1. Streamlit secrets
+    st_val = _query_streamlit_secrets(keys)
+    if st_val is not None:
+        return st_val
+
+    # 2. Environment variables
+    for k in keys:
+        env_val = os.getenv(k)
+        cleaned = _clean_str(env_val)
+        if cleaned:
+            return cleaned
+        # Case-insensitive env search
+        k_lower = k.lower()
+        for ek, ev in os.environ.items():
+            if ek.lower() == k_lower:
+                cleaned = _clean_str(ev)
+                if cleaned:
+                    return cleaned
+
+    # 3. Local secrets.toml fallback
+    file_val = _query_local_secrets_toml(keys)
+    if file_val is not None:
+        return file_val
 
     return default
 
 
-def get_otp_delivery_mode() -> str:
+# ── Channel Inspection & Configuration Helpers ────────────────────────────────
+
+def get_totp_secret() -> Optional[str]:
+    """Retrieve configured TOTP secret string (Base32), or None if unconfigured."""
+    return get_config_secret(TOTP_SECRET_ALIASES)
+
+
+def is_totp_configured() -> bool:
+    """Return True if ADMIN_TOTP_SECRET is configured."""
+    return get_totp_secret() is not None
+
+
+def get_smtp_config() -> Dict[str, Optional[str]]:
+    """Retrieve SMTP delivery settings."""
+    return {
+        "server": get_config_secret(SMTP_SERVER_ALIASES),
+        "port": get_config_secret(SMTP_PORT_ALIASES, default="587"),
+        "username": get_config_secret(SMTP_USER_ALIASES),
+        "password": get_config_secret(SMTP_PASS_ALIASES),
+        "admin_email": get_config_secret(ADMIN_EMAIL_ALIASES),
+        "use_tls": get_config_secret(["SMTP_USE_TLS"], default="true"),
+    }
+
+
+def is_email_configured() -> bool:
+    """Return True if all required SMTP settings and admin recipient email are present."""
+    cfg = get_smtp_config()
+    return bool(cfg["server"] and cfg["username"] and cfg["password"] and cfg["admin_email"])
+
+
+def is_dev_mode_enabled() -> bool:
+    """Return True if local developer console mode is enabled."""
+    val = get_config_secret(["DEEPWAF_DEV_MODE", "ALLOW_DEV_TERMINAL_OTP"], default="false")
+    return str(val).lower() in ("true", "1", "yes")
+
+
+def get_available_methods() -> List[str]:
+    """List all currently configured/available 2FA methods ('totp', 'email', 'dev')."""
+    methods = []
+    if is_totp_configured():
+        methods.append("totp")
+    if is_email_configured():
+        methods.append("email")
+    if is_dev_mode_enabled():
+        methods.append("dev")
+    return methods
+
+
+def get_default_method() -> str:
     """
-    Determine the active 2FA delivery mode based on configuration:
-      - 'totp': If ADMIN_TOTP_SECRET is configured
-      - 'email': If SMTP configuration is provided
-      - 'dev': If DEEPWAF_DEV_MODE == 'true' (local testing only)
-      - 'none': Neither configured
+    Get recommended active 2FA method:
+      - 'totp': if TOTP is configured (preferred production standard)
+      - 'email': if SMTP is configured
+      - 'dev': if local dev mode
+      - 'totp': default fallback view to guide administrator to set TOTP
     """
-    totp_secret = _get_secret_or_env("ADMIN_TOTP_SECRET")
-    if totp_secret:
+    if is_totp_configured():
         return "totp"
-
-    smtp_server = _get_secret_or_env("SMTP_SERVER")
-    smtp_user = _get_secret_or_env("SMTP_USERNAME") or _get_secret_or_env("SMTP_EMAIL")
-    smtp_pwd = _get_secret_or_env("SMTP_PASSWORD") or _get_secret_or_env("SMTP_APP_PASSWORD")
-    admin_email = _get_secret_or_env("ADMIN_EMAIL")
-    if smtp_server and smtp_user and smtp_pwd and admin_email:
+    if is_email_configured():
         return "email"
-
-    dev_mode = _get_secret_or_env("DEEPWAF_DEV_MODE", "false").lower() in ("true", "1", "yes")
-    allow_dev_term = _get_secret_or_env("ALLOW_DEV_TERMINAL_OTP", "false").lower() in ("true", "1", "yes")
-    if dev_mode or allow_dev_term:
+    if is_dev_mode_enabled():
         return "dev"
+    return "totp"
 
+
+def get_otp_delivery_mode() -> str:
+    """Backward-compatible mode identifier for legacy callers."""
+    if is_totp_configured():
+        return "totp"
+    if is_email_configured():
+        return "email"
+    if is_dev_mode_enabled():
+        return "dev"
     return "none"
 
 
 def is_delivery_configured() -> bool:
-    """Check if any valid 2FA delivery channel is ready."""
-    return get_otp_delivery_mode() != "none"
+    """Backward-compatible check for legacy callers: True if TOTP, Email, or Dev is ready."""
+    return is_totp_configured() or is_email_configured() or is_dev_mode_enabled()
 
 
 # ── RFC 6238 TOTP Engine ──────────────────────────────────────────────────────
 
 def _normalize_base32(secret: str) -> bytes:
-    """Pad and decode base32 secret."""
-    cleaned = secret.strip().replace(" ", "").upper()
+    """
+    Robust Base32 key normalizer.
+    Strips whitespace/hyphens and converts to uppercase.
+    Handles common user typos (0->O, 1->I, 8->B) and falls back to SHA-256
+    digest if an arbitrary non-base32 passphrase was provided.
+    """
+    cleaned = secret.strip().replace(" ", "").replace("-", "").upper()
     padding = (8 - len(cleaned) % 8) % 8
-    cleaned += "=" * padding
-    return base64.b32decode(cleaned, casefold=True)
+    try:
+        return base64.b32decode(cleaned + "=" * padding, casefold=True)
+    except Exception:
+        # Common substitution fallback
+        mapped = cleaned.replace("0", "O").replace("1", "I").replace("8", "B")
+        padding_m = (8 - len(mapped) % 8) % 8
+        try:
+            return base64.b32decode(mapped + "=" * padding_m, casefold=True)
+        except Exception:
+            return hashlib.sha256(secret.strip().encode("utf-8")).digest()
 
 
 def generate_totp_code(secret_base32: str, interval: int = 30) -> str:
@@ -121,16 +335,16 @@ def generate_totp_code(secret_base32: str, interval: int = 30) -> str:
 
 def verify_totp_code(secret_base32: str, entered_code: str, interval: int = 30, window: int = 1) -> bool:
     """
-    Verify entered code against TOTP algorithm with a ±window (default ±1 window = ±30s)
-    to gracefully handle mobile clock skew.
+    Verify entered code against TOTP algorithm with a ±window (default ±1 = ±30s)
+    to handle mobile clock drift.
     """
+    clean_code = str(entered_code).strip()
+    if len(clean_code) != 6 or not clean_code.isdigit():
+        return False
+
     try:
         key = _normalize_base32(secret_base32)
     except Exception:
-        return False
-
-    clean_code = str(entered_code).strip()
-    if len(clean_code) != 6 or not clean_code.isdigit():
         return False
 
     current_counter = int(time.time() // interval)
@@ -148,11 +362,12 @@ def verify_totp_code(secret_base32: str, entered_code: str, interval: int = 30, 
 
 def _send_smtp_email(to_email: str, otp_code: str, username: str, purpose: str) -> Tuple[bool, str]:
     """Send OTP securely via authenticated SMTP with clean HTML/text formatting."""
-    smtp_server = _get_secret_or_env("SMTP_SERVER")
-    smtp_port = int(_get_secret_or_env("SMTP_PORT", "587"))
-    smtp_user = _get_secret_or_env("SMTP_USERNAME") or _get_secret_or_env("SMTP_EMAIL")
-    smtp_pwd = _get_secret_or_env("SMTP_PASSWORD") or _get_secret_or_env("SMTP_APP_PASSWORD")
-    use_tls = _get_secret_or_env("SMTP_USE_TLS", "true").lower() in ("true", "1", "yes")
+    cfg = get_smtp_config()
+    smtp_server = cfg["server"]
+    smtp_port = int(cfg["port"] or "587")
+    smtp_user = cfg["username"]
+    smtp_pwd = cfg["password"]
+    use_tls = str(cfg["use_tls"]).lower() in ("true", "1", "yes")
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"[DeepWAF-XAI] 🔐 Security Passcode: {otp_code} (Valid for 5 mins)"
@@ -207,59 +422,96 @@ def _send_smtp_email(to_email: str, otp_code: str, username: str, purpose: str) 
         return False, f"Failed to dispatch email via SMTP: {str(exc)}"
 
 
-# ── Public High-Level Service Methods ─────────────────────────────────────────
-
-def generate_and_dispatch_admin_otp(username: str, purpose: str = "Admin Two-Step Verification") -> Tuple[bool, str, str]:
+def dispatch_email_otp(username: str, purpose: str = "Admin Two-Step Verification") -> Tuple[bool, str]:
     """
-    Generate and deliver a secure OTP to the operator.
-    Returns:
-      (success: bool, mode: str, user_facing_message: str)
+    Generate and dispatch a 6-digit dynamic passcode via authenticated SMTP.
+    Requires SMTP settings to be configured. Does not affect TOTP mode.
     """
     username = username.strip()
-    mode = get_otp_delivery_mode()
-
-    if mode == "none":
-        return False, "none", (
-            "⚠️ 2FA Delivery is not configured for cloud deployment.\n"
-            "Please configure ADMIN_TOTP_SECRET (recommended for Authenticator apps) "
-            "or SMTP credentials in Streamlit Cloud Secrets."
+    if not is_email_configured():
+        return False, (
+            "SMTP email delivery is not configured.\n"
+            "Please configure SMTP_SERVER, SMTP_USERNAME, SMTP_PASSWORD, and ADMIN_EMAIL "
+            "in Streamlit Cloud Secrets."
         )
 
-    # If mode is TOTP: no email/terminal dispatch is needed; code is generated on operator's device
-    if mode == "totp":
-        return True, "totp", (
-            "🔐 Two-Factor Authentication Active: Enter the current 6-digit code "
-            "from your Authenticator app (Google Authenticator / Authy / Microsoft Authenticator)."
-        )
-
-    # Rate limiting check for dynamic codes (Email / Dev)
+    # Rate limiting check
     now = time.time()
     last_req = _LAST_REQUEST_TIME.get(username, 0.0)
     if now - last_req < OTP_COOLDOWN_SECONDS:
         remaining = int(OTP_COOLDOWN_SECONDS - (now - last_req))
-        return False, mode, f"⏳ Rate limit: Please wait {remaining} seconds before requesting a new passcode."
+        return False, f"⏳ Rate limit: Please wait {remaining} seconds before requesting a new passcode."
 
-    # Generate cryptographically strong 6-digit code
     code = f"{random.SystemRandom().randint(100000, 999999):06d}"
     _ACTIVE_OTPS[username] = {
         "code": code,
         "created_at": now,
         "expires_at": now + OTP_EXPIRY_SECONDS,
         "attempts": 0,
-        "mode": mode
+        "mode": "email"
     }
     _LAST_REQUEST_TIME[username] = now
 
-    if mode == "email":
-        admin_email = _get_secret_or_env("ADMIN_EMAIL")
-        ok, msg = _send_smtp_email(admin_email, code, username, purpose)
-        if ok:
-            return True, "email", f"✉️ A 6-digit passcode has been sent to {admin_email}. Valid for 5 minutes."
-        else:
-            return False, "email", f"❌ Failed to deliver passcode: {msg}"
+    cfg = get_smtp_config()
+    admin_email = cfg["admin_email"]
+    ok, msg = _send_smtp_email(admin_email, code, username, purpose)
+    if ok:
+        return True, f"✉️ A 6-digit passcode has been sent to {admin_email}. Valid for 5 minutes."
+    else:
+        return False, f"❌ Failed to deliver passcode: {msg}"
 
-    elif mode == "dev":
-        # Safe dev fallback — only active when DEEPWAF_DEV_MODE=true
+
+# ── Public Service Methods ───────────────────────────────────────────────────
+
+def generate_and_dispatch_admin_otp(
+    username: str,
+    purpose: str = "Admin Two-Step Verification",
+    method: Optional[str] = None
+) -> Tuple[bool, str, str]:
+    """
+    Prepare or deliver 2FA credentials based on requested method:
+      - 'totp': No email or external network call required; validates device code.
+      - 'email': Generates dynamic code and dispatches via SMTP.
+      - 'dev': Outputs code to local terminal (only if dev mode enabled).
+      - None: Uses get_default_method().
+    Returns: (success: bool, mode: str, user_facing_message: str)
+    """
+    username = username.strip()
+    selected_method = method or get_default_method()
+
+    # 1. Authenticator (TOTP) Mode
+    if selected_method == "totp":
+        if is_totp_configured():
+            return True, "totp", (
+                "🔐 Authenticator Active: Enter the current 6-digit code "
+                "from your Authenticator app (Google Authenticator / Authy / Microsoft Authenticator)."
+            )
+        else:
+            return False, "totp", (
+                "⚠️ ADMIN_TOTP_SECRET is not configured in Streamlit Cloud Secrets.\n"
+                "Please configure ADMIN_TOTP_SECRET in Streamlit App Settings → Secrets."
+            )
+
+    # 2. Email OTP Mode
+    elif selected_method == "email":
+        ok, msg = dispatch_email_otp(username, purpose)
+        return ok, "email", msg
+
+    # 3. Local Developer Mode
+    elif selected_method == "dev":
+        if not is_dev_mode_enabled():
+            return False, "dev", "Dev mode is disabled. Set DEEPWAF_DEV_MODE=true for local console OTPs."
+
+        now = time.time()
+        code = f"{random.SystemRandom().randint(100000, 999999):06d}"
+        _ACTIVE_OTPS[username] = {
+            "code": code,
+            "created_at": now,
+            "expires_at": now + OTP_EXPIRY_SECONDS,
+            "attempts": 0,
+            "mode": "dev"
+        }
+        _LAST_REQUEST_TIME[username] = now
         try:
             print(f"\n{'='*60}\n[LOCAL DEV MODE] DeepWAF-XAI Admin OTP: {code}\nTarget Operator: {username} | Purpose: {purpose}\n{'='*60}\n", flush=True)
         except Exception:
@@ -269,49 +521,97 @@ def generate_and_dispatch_admin_otp(username: str, purpose: str = "Admin Two-Ste
     return False, "unknown", "Unknown 2FA mode configuration."
 
 
-def verify_admin_otp(username: str, entered_code: str) -> Tuple[bool, str]:
+def handle_resend_code(username: str, method: str = "totp") -> Tuple[bool, str]:
     """
-    Verify the entered OTP against TOTP or active dynamic passcode.
-    Enforces expiry, max failed attempts, single-use invalidation, and timing-safe comparison.
+    Handle 'Resend Code' button action:
+      - For 'totp': Explains that TOTP codes are time-based and auto-refresh on the user's mobile app.
+      - For 'email': Dispatches a new dynamic email OTP via SMTP.
+      - For 'dev': Generates a new code and outputs to terminal.
+    """
+    username = username.strip()
+    clean_method = method.lower()
+
+    if clean_method == "totp":
+        return False, (
+            "ℹ️ Authenticator codes are time-based and refresh automatically every 30 seconds "
+            "on your mobile device (Google Authenticator / Authy). Use the active 6-digit code "
+            "currently displayed in your app."
+        )
+    elif clean_method == "email":
+        return dispatch_email_otp(username, purpose="Admin Login Resend")
+    elif clean_method == "dev":
+        ok, _, msg = generate_and_dispatch_admin_otp(username, purpose="Admin Login Resend", method="dev")
+        return ok, msg
+    else:
+        return False, "Unsupported 2FA method for resend."
+
+
+def verify_admin_otp(
+    username: str,
+    entered_code: str,
+    method: Optional[str] = None
+) -> Tuple[bool, str]:
+    """
+    Verify the entered OTP against the specified or detected 2FA method:
+      - 'totp': Verifies against ADMIN_TOTP_SECRET (RFC 6238). Does NOT require SMTP credentials.
+      - 'email': Verifies against the dispatched dynamic OTP in _ACTIVE_OTPS.
+      - 'dev': Verifies against dynamic code in _ACTIVE_OTPS.
+      - None: Auto-detects (prioritizes active dispatched OTP if pending, else TOTP).
+    Enforces format, expiration, max failed attempts, single-use invalidation, and timing safety.
     """
     username = username.strip()
     clean_code = str(entered_code).strip()
-    mode = get_otp_delivery_mode()
 
     if not clean_code or len(clean_code) != 6 or not clean_code.isdigit():
         return False, "Please enter a valid 6-digit passcode."
 
-    # 1. Verify via TOTP if configured
-    if mode == "totp":
-        totp_secret = _get_secret_or_env("ADMIN_TOTP_SECRET")
+    # Determine verification method
+    target_method = method
+    if not target_method:
+        if username in _ACTIVE_OTPS:
+            target_method = _ACTIVE_OTPS[username].get("mode", "email")
+        elif is_totp_configured():
+            target_method = "totp"
+        elif is_email_configured():
+            target_method = "email"
+        elif is_dev_mode_enabled():
+            target_method = "dev"
+        else:
+            target_method = "totp"
+
+    # ── Authenticator (TOTP) Verification ─────────────────────────────────────
+    if target_method == "totp":
+        totp_secret = get_totp_secret()
         if not totp_secret:
-            return False, "TOTP secret is not configured."
-        if verify_totp_code(totp_secret, clean_code):
-            logger.info(f"[2FA] Successful TOTP authentication for user '{username}'")
+            return False, "ADMIN_TOTP_SECRET is not configured in Streamlit Cloud Secrets or environment variables."
+
+        if verify_totp_code(totp_secret, clean_code, window=1):
+            logger.info(f"[2FA] Successful TOTP authentication for operator '{username}'")
             return True, "Verification successful."
         return False, "Invalid Authenticator passcode. Check your device clock and try again."
 
-    # 2. Verify dynamic code (Email / Dev)
+    # ── Dynamic Code Verification (Email / Dev) ───────────────────────────────
     record = _ACTIVE_OTPS.get(username)
     if not record:
-        return False, "No active passcode found. Please click 'Request Passcode' to generate one."
+        if target_method == "email":
+            return False, "No active email passcode found. Click 'Resend Code' to dispatch a new passcode."
+        return False, "No active passcode found. Please request a new passcode."
 
     # Check expiration
     if time.time() > record["expires_at"]:
         _ACTIVE_OTPS.pop(username, None)
         return False, "Passcode has expired. Please request a new one."
 
-    # Check attempts
+    # Check attempt threshold
     record["attempts"] += 1
     if record["attempts"] > MAX_VERIFICATION_ATTEMPTS:
         _ACTIVE_OTPS.pop(username, None)
         return False, "Maximum verification attempts exceeded. Passcode revoked for security. Request a new one."
 
-    # Timing-safe comparison
+    # Constant-time comparison
     if hmac.compare_digest(record["code"], clean_code):
-        # Single-use consumption
         _ACTIVE_OTPS.pop(username, None)
-        logger.info(f"[2FA] Dynamic passcode verified for operator '{username}'")
+        logger.info(f"[2FA] Dynamic passcode verified for operator '{username}' ({target_method})")
         return True, "Verification successful."
     else:
         remaining = MAX_VERIFICATION_ATTEMPTS - record["attempts"]
@@ -319,5 +619,5 @@ def verify_admin_otp(username: str, entered_code: str) -> Tuple[bool, str]:
 
 
 def clear_active_otp(username: str) -> None:
-    """Clear any pending OTP for the operator."""
+    """Clear any pending active dynamic OTP for the operator."""
     _ACTIVE_OTPS.pop(username.strip(), None)

@@ -675,78 +675,162 @@ if not st.session_state.get("authenticated", False):
             pending_user = st.session_state.get("pending_2fa_user")
 
             if pending_user:
-                # ── Phase 2: Privileged Multi-Channel 2FA Verification ─────────
+                # ── Phase 2: Privileged Two-Factor Authentication ─────────────
                 pending_role = st.session_state.get("pending_2fa_role", "admin")
                 role_label = "Administrator" if pending_role == "admin" else "Security Tester"
-                two_fa_mode = st.session_state.get("2fa_mode", otp_service.get_otp_delivery_mode())
-                delivery_msg = st.session_state.get("2fa_delivery_msg", "")
-                is_conf = st.session_state.get("2fa_configured", otp_service.is_delivery_configured())
 
-                if not is_conf or two_fa_mode == "none":
-                    st.html(f"""
-                    <div style="
-                        background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
-                        border: 1px solid #ef4444;
-                        border-radius: 12px;
-                        padding: 16px 20px;
-                        margin-bottom: 16px;
-                    ">
-                        <div style="color: #fca5a5; font-weight: 700; font-size: 16px;">
-                            ⚠️ Two-Step Verification Required (Cloud Configuration Needed)
-                        </div>
-                        <div style="color: #fee2e2; font-size: 13px; margin-top: 6px; line-height: 1.5;">
-                            Account <b>{pending_user}</b> ({role_label}) requires secondary 2FA verification.<br>
-                            To receive 2FA passcodes on Streamlit Community Cloud, please configure credentials in <b>Streamlit App Settings &rarr; Secrets</b>.
-                        </div>
-                    </div>
-                    """)
-                    with st.expander("🛠️ How to configure Cloud 2FA Secrets (Click to view)", expanded=True):
-                        st.markdown("""
-                        **Option 1: Authenticator App (Recommended - Google Authenticator / Authy / Microsoft Authenticator)**
-                        Add to Streamlit Cloud Secrets:
-                        ```toml
-                        ADMIN_TOTP_SECRET = "DEEPWAFXAI2FA2026"
-                        ```
+                # Check configuration status dynamically
+                totp_ready = otp_service.is_totp_configured()
+                email_ready = otp_service.is_email_configured()
+                dev_ready = otp_service.is_dev_mode_enabled()
 
-                        **Option 2: Authenticated SMTP Email Delivery**
-                        Add to Streamlit Cloud Secrets:
-                        ```toml
-                        SMTP_SERVER = "smtp.gmail.com"
-                        SMTP_PORT = 587
-                        SMTP_USERNAME = "your-soc-alert@gmail.com"
-                        SMTP_PASSWORD = "your-app-password"
-                        ADMIN_EMAIL = "admin@yourdomain.com"
-                        ```
+                # Build available method choices
+                method_labels = {
+                    "totp": "📱 Authenticator App (Google / Authy)",
+                    "email": "✉️ Email Passcode (SMTP)",
+                }
+                if dev_ready:
+                    method_labels["dev"] = "🔧 Local Dev Console"
 
-                        *(For local development only: set `DEEPWAF_DEV_MODE = "true"` in `.env` to output passcodes to your local console).*
-                        """)
-                else:
-                    if two_fa_mode == "totp":
-                        delivery_header = "🔐 Authenticator App Verification"
-                        delivery_detail = "Enter the current 6-digit passcode from your Authenticator app (Google Authenticator, Authy, or Microsoft Authenticator)."
-                        accent_color = "#38bdf8"
-                    elif two_fa_mode == "email":
-                        delivery_header = "✉️ Security Passcode Dispatched"
-                        delivery_detail = delivery_msg or "A single-use 6-digit security code has been sent to your administrator email address. Valid for 5 minutes."
-                        accent_color = "#34d399"
+                available_keys = list(method_labels.keys())
+
+                # Set initial preferred selection if not in session state
+                if "selected_2fa_method" not in st.session_state:
+                    if totp_ready:
+                        st.session_state["selected_2fa_method"] = "totp"
+                    elif email_ready:
+                        st.session_state["selected_2fa_method"] = "email"
+                    elif dev_ready:
+                        st.session_state["selected_2fa_method"] = "dev"
                     else:
-                        delivery_header = "🔧 Local Development Mode Active"
-                        delivery_detail = "Dynamic passcode printed to your local terminal console."
-                        accent_color = "#fbbf24"
+                        st.session_state["selected_2fa_method"] = "totp"
 
-                    st.html(f"""
+                current_method_key = st.session_state.get("selected_2fa_method", "totp")
+                if current_method_key not in available_keys:
+                    current_method_key = "totp"
+                    st.session_state["selected_2fa_method"] = "totp"
+
+                # Method Selector (Radio)
+                selected_label = st.radio(
+                    "Select Secondary 2FA Method",
+                    options=[method_labels[k] for k in available_keys],
+                    index=available_keys.index(current_method_key),
+                    horizontal=True,
+                    key="radio_2fa_method_select",
+                    help="Choose between time-based Authenticator code or Email one-time passcode"
+                )
+                # Map selected label back to key
+                active_method = [k for k, v in method_labels.items() if v == selected_label][0]
+                st.session_state["selected_2fa_method"] = active_method
+
+                # Render method-specific status & instructions
+                if active_method == "totp":
+                    if totp_ready:
+                        st.html("""
+                        <div style="
+                            background: linear-gradient(135deg, #0b192c 0%, #0d2847 100%);
+                            border: 1px solid #38bdf8;
+                            border-radius: 12px;
+                            padding: 16px 20px;
+                            margin-bottom: 16px;
+                        ">
+                            <div style="color: #38bdf8; font-weight: 700; font-size: 16px;">
+                                🔐 Authenticator App Verification (RFC 6238 TOTP)
+                            </div>
+                            <div style="color: #e2e8f0; font-size: 13px; margin-top: 4px;">
+                                Enter the active 6-digit passcode currently displayed in your mobile Authenticator app (Google Authenticator, Authy, or Microsoft Authenticator).
+                            </div>
+                        </div>
+                        """)
+                    else:
+                        st.html(f"""
+                        <div style="
+                            background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
+                            border: 1px solid #f59e0b;
+                            border-radius: 12px;
+                            padding: 16px 20px;
+                            margin-bottom: 16px;
+                        ">
+                            <div style="color: #fbbf24; font-weight: 700; font-size: 16px;">
+                                ⚠️ ADMIN_TOTP_SECRET Not Configured
+                            </div>
+                            <div style="color: #fee2e2; font-size: 13px; margin-top: 6px; line-height: 1.5;">
+                                Account <b>{pending_user}</b> ({role_label}) requires secondary 2FA verification.<br>
+                                To use Authenticator App mode, please configure your Base32 secret in <b>Streamlit App Settings &rarr; Secrets</b>.
+                            </div>
+                        </div>
+                        """)
+                        with st.expander("🛠️ How to configure ADMIN_TOTP_SECRET in Streamlit Cloud Secrets", expanded=True):
+                            st.markdown("""
+                            Add your base32 TOTP secret to Streamlit Cloud Secrets (**App Settings &rarr; Secrets**):
+                            ```toml
+                            ADMIN_TOTP_SECRET = "JBSWY3DPEHPK3PXP"
+                            ```
+                            *Add the same secret key to Google Authenticator / Authy on your mobile phone.*
+                            """)
+
+                elif active_method == "email":
+                    if email_ready:
+                        email_info = otp_service.get_smtp_config().get("admin_email", "admin email")
+                        st.html(f"""
+                        <div style="
+                            background: linear-gradient(135deg, #0b1f1a 0%, #0d382c 100%);
+                            border: 1px solid #34d399;
+                            border-radius: 12px;
+                            padding: 16px 20px;
+                            margin-bottom: 16px;
+                        ">
+                            <div style="color: #34d399; font-weight: 700; font-size: 16px;">
+                                ✉️ Email One-Time Passcode Mode Active
+                            </div>
+                            <div style="color: #e2e8f0; font-size: 13px; margin-top: 4px;">
+                                Passcodes are dispatched via authenticated SMTP to <b>{email_info}</b>. Click <b>Request / Resend Code</b> to dispatch.
+                            </div>
+                        </div>
+                        """)
+                    else:
+                        st.html(f"""
+                        <div style="
+                            background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
+                            border: 1px solid #ef4444;
+                            border-radius: 12px;
+                            padding: 16px 20px;
+                            margin-bottom: 16px;
+                        ">
+                            <div style="color: #fca5a5; font-weight: 700; font-size: 16px;">
+                                ⚠️ SMTP Email Delivery Credentials Needed
+                            </div>
+                            <div style="color: #fee2e2; font-size: 13px; margin-top: 6px; line-height: 1.5;">
+                                To receive dynamic email passcodes, please configure SMTP credentials in <b>Streamlit App Settings &rarr; Secrets</b>.
+                            </div>
+                        </div>
+                        """)
+                        with st.expander("🛠️ How to configure SMTP Email Secrets in Streamlit Cloud", expanded=True):
+                            st.markdown("""
+                            Add SMTP credentials to Streamlit Cloud Secrets (**App Settings &rarr; Secrets**):
+                            ```toml
+                            SMTP_SERVER = "smtp.gmail.com"
+                            SMTP_PORT = 587
+                            SMTP_USERNAME = "your-soc-alert@gmail.com"
+                            SMTP_PASSWORD = "your-app-password"
+                            ADMIN_EMAIL = "admin@yourdomain.com"
+                            ```
+                            """)
+
+                elif active_method == "dev":
+                    st.html("""
                     <div style="
-                        background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
-                        border: 1px solid {accent_color};
+                        background: linear-gradient(135deg, #1f1d0b 0%, #362e0c 100%);
+                        border: 1px solid #fbbf24;
                         border-radius: 12px;
                         padding: 16px 20px;
                         margin-bottom: 16px;
                     ">
-                        <div style="color: {accent_color}; font-weight: 700; font-size: 16px;">
-                            {delivery_header}
+                        <div style="color: #fbbf24; font-weight: 700; font-size: 16px;">
+                            🔧 Local Development Mode Active
                         </div>
-                        <div style="color: #e2e8f0; font-size: 13px; margin-top: 4px;">
-                            {delivery_detail}
+                        <div style="color: #fef08a; font-size: 13px; margin-top: 4px;">
+                            Dynamic security passcodes are output to your local terminal console.
                         </div>
                     </div>
                     """)
@@ -763,10 +847,12 @@ if not st.session_state.get("authenticated", False):
 
                 with col_verify:
                     if st.button("✅ Verify & Sign In", type="primary", use_container_width=True, key="btn_phase2_verify"):
-                        if not is_conf and two_fa_mode == "none":
-                            st.error("❌ 2FA delivery credentials must be configured in Streamlit Cloud Secrets before completing administrator login.")
+                        if active_method == "totp" and not totp_ready:
+                            st.error("❌ ADMIN_TOTP_SECRET is not configured in Streamlit Cloud Secrets. Please add it to App Settings → Secrets.")
+                        elif active_method == "email" and not email_ready:
+                            st.error("❌ SMTP credentials must be configured in Streamlit Cloud Secrets before completing Email 2FA login.")
                         else:
-                            v_ok, v_msg = otp_service.verify_admin_otp(pending_user, otp_input.strip())
+                            v_ok, v_msg = otp_service.verify_admin_otp(pending_user, otp_input.strip(), method=active_method)
                             if v_ok:
                                 st.session_state.clear()
                                 st.session_state["authenticated"] = True
@@ -774,30 +860,43 @@ if not st.session_state.get("authenticated", False):
                                 st.session_state["role"] = pending_role
                                 st.session_state["pending_2fa_user"] = None
                                 st.session_state["pending_2fa_role"] = None
-                                st.success("✅ 2FA Verification successful! Loading platform...")
+                                st.session_state.pop("selected_2fa_method", None)
+                                st.success("✅ 2FA Verification successful! Loading SOC platform...")
                                 time.sleep(0.3)
                                 st.rerun()
                             else:
                                 st.error(f"❌ {v_msg}")
 
                 with col_resend:
-                    if st.button("🔄 Resend Code", use_container_width=True, key="btn_phase2_resend"):
-                        ok_r, mode_r, msg_r = otp_service.generate_and_dispatch_admin_otp(pending_user, purpose="Admin Login Resend")
-                        st.session_state["2fa_mode"] = mode_r
-                        st.session_state["2fa_delivery_msg"] = msg_r
-                        st.session_state["2fa_configured"] = ok_r
-                        if ok_r:
-                            st.toast(msg_r, icon="✉️")
-                        else:
-                            st.error(msg_r)
-                        time.sleep(0.2)
-                        st.rerun()
+                    resend_label = "🔄 Resend Code" if active_method != "totp" else "🔄 Code Help"
+                    if st.button(resend_label, use_container_width=True, key="btn_phase2_resend"):
+                        if active_method == "totp":
+                            st.info(
+                                "ℹ️ Authenticator codes are time-based and refresh automatically every 30 seconds "
+                                "on your mobile device (Google Authenticator / Authy / Microsoft Authenticator). "
+                                "Enter the active 6-digit code currently displayed in your app."
+                            )
+                        elif active_method == "email":
+                            ok_r, msg_r = otp_service.dispatch_email_otp(pending_user, purpose="Admin Login Resend")
+                            if ok_r:
+                                st.toast(msg_r, icon="✉️")
+                                st.success(msg_r)
+                            else:
+                                st.error(msg_r)
+                        elif active_method == "dev":
+                            ok_r, _, msg_r = otp_service.generate_and_dispatch_admin_otp(pending_user, purpose="Admin Login Resend", method="dev")
+                            if ok_r:
+                                st.toast(msg_r, icon="🔧")
+                                st.success(msg_r)
+                            else:
+                                st.error(msg_r)
 
                 with col_cancel:
                     if st.button("↩ Cancel / Go Back", use_container_width=True, key="btn_phase2_cancel"):
                         otp_service.clear_active_otp(pending_user)
                         st.session_state["pending_2fa_user"] = None
                         st.session_state["pending_2fa_role"] = None
+                        st.session_state.pop("selected_2fa_method", None)
                         st.rerun()
 
             else:
@@ -841,15 +940,19 @@ if not st.session_state.get("authenticated", False):
                             if role == "blocked":
                                 st.error("⛔ Access Revoked: This account has been blocked by the Administrator.")
                             elif role == "admin":
-                                # Trigger Phase 2: Privileged Multi-Channel 2FA for Administrator
-                                ok_2fa, mode_2fa, msg_2fa = otp_service.generate_and_dispatch_admin_otp(
-                                    login_user.strip(), purpose="Admin Dashboard Login"
-                                )
+                                # Trigger Phase 2: Privileged 2FA for Administrator
                                 st.session_state["pending_2fa_user"] = login_user.strip()
                                 st.session_state["pending_2fa_role"] = role
-                                st.session_state["2fa_mode"] = mode_2fa
-                                st.session_state["2fa_delivery_msg"] = msg_2fa
-                                st.session_state["2fa_configured"] = ok_2fa
+                                if otp_service.is_totp_configured():
+                                    st.session_state["selected_2fa_method"] = "totp"
+                                elif otp_service.is_email_configured():
+                                    st.session_state["selected_2fa_method"] = "email"
+                                    otp_service.dispatch_email_otp(login_user.strip(), purpose="Admin Dashboard Login")
+                                elif otp_service.is_dev_mode_enabled():
+                                    st.session_state["selected_2fa_method"] = "dev"
+                                    otp_service.generate_and_dispatch_admin_otp(login_user.strip(), purpose="Admin Dashboard Login", method="dev")
+                                else:
+                                    st.session_state["selected_2fa_method"] = "totp"
                                 st.rerun()
                             else:
                                 # Security Auditor / Tester (tester) & Standard Operators (user): Direct password login without OTP
