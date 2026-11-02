@@ -4,9 +4,12 @@ tests/test_backend_integration.py
 Automated test suite verifying:
   1. Central Database consistency & User Registration -> Admin Directory reflection
   2. Multi-channel Admin 2FA:
-     - Authenticator TOTP (valid, invalid, expired/skewed, zero SMTP required)
-     - Missing TOTP secret in Authenticator mode
-     - Missing SMTP credentials in Email mode
+     - Local .streamlit/secrets.toml secret lookup & verification (Zero SMTP required)
+     - Environment variable secret lookup & verification
+     - Invalid TOTP code rejection
+     - Outdated / expired TOTP code rejection outside ±30s window
+     - Missing TOTP secret handling
+     - Missing SMTP credentials handling in Email mode
      - Dynamic Email OTP lifecycle (rate-limiting, expiry, 3-attempt lockout, single-use)
      - Authenticator Resend guidance vs Email Resend dispatch
      - Admin access authorization grant on valid OTP vs denial on invalid OTP
@@ -86,18 +89,19 @@ def test_admin_2fa_lifecycle():
         os.environ.pop(k, None)
 
     # ──────────────────────────────────────────────────────────────────────────
-    # Case 2A: Authenticator Mode with Zero SMTP Credentials
+    # Case 2A: Local .streamlit/secrets.toml Lookup & TOTP (Zero SMTP Required)
     # ──────────────────────────────────────────────────────────────────────────
-    print("  Case 2A: Authenticator Mode (Zero SMTP credentials configured)...")
-    os.environ["ADMIN_TOTP_SECRET"] = "JBSWY3DPEHPK3PXP"
+    print("  Case 2A: Local .streamlit/secrets.toml Lookup & Verification (Zero SMTP)...")
+    local_secret = otp_service.get_totp_secret()
+    assert local_secret is not None, "Local .streamlit/secrets.toml secret could not be read!"
     assert otp_service.is_totp_configured() is True
     assert otp_service.is_email_configured() is False  # Zero SMTP configured!
 
-    # 1. Valid TOTP verification
-    valid_code = otp_service.generate_totp_code("JBSWY3DPEHPK3PXP")
+    # 1. Valid TOTP verification from local secret
+    valid_code = otp_service.generate_totp_code(local_secret)
     v_ok, v_msg = otp_service.verify_admin_otp("admin", valid_code, method="totp")
     assert v_ok is True, f"Valid TOTP failed: {v_msg}"
-    print("    [+] Valid TOTP authenticated successfully without SMTP credentials.")
+    print("    [+] Valid TOTP from local secrets.toml authenticated successfully without SMTP credentials.")
 
     # 2. Invalid TOTP verification
     bad_code = "000000" if valid_code != "000000" else "111111"
@@ -109,7 +113,7 @@ def test_admin_2fa_lifecycle():
     # 3. Outdated / expired TOTP code outside skew window (e.g. 5 minutes ago)
     import struct, hmac, hashlib
     past_counter = int((time.time() - 300) // 30)
-    key = otp_service._normalize_base32("JBSWY3DPEHPK3PXP")
+    key = otp_service._normalize_base32(local_secret)
     msg = struct.pack(">Q", past_counter)
     digest = hmac.new(key, msg, hashlib.sha1).digest()
     offset = digest[19] & 0x0F
@@ -128,12 +132,18 @@ def test_admin_2fa_lifecycle():
     # Case 2B: Missing TOTP Secret in Authenticator Mode
     # ──────────────────────────────────────────────────────────────────────────
     print("  Case 2B: Missing TOTP Secret in Authenticator Mode...")
-    os.environ.pop("ADMIN_TOTP_SECRET", None)
-    assert otp_service.is_totp_configured() is False
-    v_no_sec, no_sec_msg = otp_service.verify_admin_otp("admin", "123456", method="totp")
-    assert v_no_sec is False
-    assert "ADMIN_TOTP_SECRET is not configured" in no_sec_msg
-    print("    [+] Missing TOTP secret displays clear configuration instruction.")
+    # Test verify_totp_admin when no secret is found
+    # Temporarily bypass secret lookup to simulate completely unconfigured state
+    orig_get_totp = otp_service.get_totp_secret
+    try:
+        otp_service.get_totp_secret = lambda: None
+        assert otp_service.is_totp_configured() is False
+        v_no_sec, no_sec_msg = otp_service.verify_admin_otp("admin", "123456", method="totp")
+        assert v_no_sec is False
+        assert "ADMIN_TOTP_SECRET is not configured" in no_sec_msg
+        print("    [+] Missing TOTP secret displays clear configuration instruction.")
+    finally:
+        otp_service.get_totp_secret = orig_get_totp
 
     # ──────────────────────────────────────────────────────────────────────────
     # Case 2C: Missing SMTP Credentials in Email Mode
@@ -201,11 +211,9 @@ def test_admin_2fa_lifecycle():
     print("    [+] Max attempts brute-force protection verified.")
 
     # ──────────────────────────────────────────────────────────────────────────
-    # Case 2E: Authorization Simulation (Admin Session Granted vs Denied)
+    # Case 2E: Authorization Simulation (Admin Session Grant vs Denial)
     # ──────────────────────────────────────────────────────────────────────────
     print("  Case 2E: Authorization Simulation (Admin Session Grant vs Denial)...")
-    os.environ["ADMIN_TOTP_SECRET"] = "JBSWY3DPEHPK3PXP"
-
     # Simulate Streamlit session state
     session_state = {
         "authenticated": False,
@@ -223,8 +231,8 @@ def test_admin_2fa_lifecycle():
     assert session_state["role"] is None
     print("    [+] Failed 2FA does NOT grant admin access.")
 
-    # Simulate successful verification attempt
-    valid_token = otp_service.generate_totp_code("JBSWY3DPEHPK3PXP")
+    # Simulate successful verification attempt using local secret
+    valid_token = otp_service.generate_totp_code(otp_service.get_totp_secret())
     sim_ok, _ = otp_service.verify_admin_otp(session_state["pending_2fa_user"], valid_token, method="totp")
     if sim_ok:
         session_state["authenticated"] = True

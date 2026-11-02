@@ -142,11 +142,21 @@ def _query_streamlit_secrets(candidate_keys: List[str]) -> Optional[str]:
 
 def _query_local_secrets_toml(candidate_keys: List[str]) -> Optional[str]:
     """Fallback reader for local .streamlit/secrets.toml if st.secrets is unavailable."""
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     paths = [
+        os.path.join(project_root, ".streamlit", "secrets.toml"),
         os.path.join(os.getcwd(), ".streamlit", "secrets.toml"),
         os.path.join(os.path.expanduser("~"), ".streamlit", "secrets.toml")
     ]
+    seen = set()
+    unique_paths = []
     for p in paths:
+        normalized = os.path.normpath(p)
+        if normalized not in seen:
+            seen.add(normalized)
+            unique_paths.append(normalized)
+
+    for p in unique_paths:
         if not os.path.isfile(p):
             continue
         try:
@@ -159,19 +169,42 @@ def _query_local_secrets_toml(candidate_keys: List[str]) -> Optional[str]:
                     cleaned = _clean_str(data[ck])
                     if cleaned:
                         return cleaned
+            for ck in candidate_keys:
+                ck_l = ck.lower()
                 for k, v in data.items():
-                    if k.lower() == ck.lower():
+                    if k.lower() == ck_l:
                         cleaned = _clean_str(v)
                         if cleaned:
                             return cleaned
-                    if isinstance(v, dict):
+            # Check nested sections
+            for v in data.values():
+                if isinstance(v, dict):
+                    for ck in candidate_keys:
                         if ck in v:
                             cleaned = _clean_str(v[ck])
                             if cleaned:
                                 return cleaned
+                        ck_l = ck.lower()
                         for sub_k, sub_v in v.items():
-                            if sub_k.lower() == ck.lower():
+                            if sub_k.lower() == ck_l:
                                 cleaned = _clean_str(sub_v)
+                                if cleaned:
+                                    return cleaned
+        except Exception:
+            pass
+
+        # Simple line parser fallback
+        try:
+            with open(p, "r", encoding="utf-8", errors="ignore") as f:
+                for line in f:
+                    line = line.strip()
+                    if "=" in line and not line.startswith("#"):
+                        parts = line.split("=", 1)
+                        k_part = parts[0].strip()
+                        v_part = parts[1].strip()
+                        for ck in candidate_keys:
+                            if k_part.lower() == ck.lower():
+                                cleaned = _clean_str(v_part)
                                 if cleaned:
                                     return cleaned
         except Exception:
@@ -182,21 +215,26 @@ def _query_local_secrets_toml(candidate_keys: List[str]) -> Optional[str]:
 def get_config_secret(candidate_keys: Union[str, List[str]], default: Optional[str] = None) -> Optional[str]:
     """
     Safely retrieve secret configuration from:
-      1. Streamlit Cloud Secrets (top-level or nested, case-insensitive)
-      2. Environment variables (os.environ)
-      3. Local .streamlit/secrets.toml
+      1. Local .streamlit/secrets.toml (fastest & direct for local development)
+      2. Streamlit Cloud Secrets (for cloud deployment container)
+      3. Environment variables (os.environ and .env)
     """
     if isinstance(candidate_keys, str):
         keys = [candidate_keys]
     else:
         keys = list(candidate_keys)
 
-    # 1. Streamlit secrets
+    # 1. Local .streamlit/secrets.toml check first (avoids Streamlit ~ permission errors on local Windows)
+    file_val = _query_local_secrets_toml(keys)
+    if file_val is not None:
+        return file_val
+
+    # 2. Streamlit Cloud Secrets
     st_val = _query_streamlit_secrets(keys)
     if st_val is not None:
         return st_val
 
-    # 2. Environment variables
+    # 3. Environment variables
     for k in keys:
         env_val = os.getenv(k)
         cleaned = _clean_str(env_val)
@@ -210,10 +248,30 @@ def get_config_secret(candidate_keys: Union[str, List[str]], default: Optional[s
                 if cleaned:
                     return cleaned
 
-    # 3. Local secrets.toml fallback
-    file_val = _query_local_secrets_toml(keys)
-    if file_val is not None:
-        return file_val
+    # 4. Optional .env fallback
+    try:
+        import dotenv
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        env_paths = [
+            os.path.join(project_root, ".env"),
+            os.path.join(os.getcwd(), ".env")
+        ]
+        for ep in env_paths:
+            if os.path.isfile(ep):
+                env_dict = dotenv.dotenv_values(ep)
+                for ck in keys:
+                    if ck in env_dict:
+                        cleaned = _clean_str(env_dict[ck])
+                        if cleaned:
+                            return cleaned
+                    ck_lower = ck.lower()
+                    for k, v in env_dict.items():
+                        if k.lower() == ck_lower:
+                            cleaned = _clean_str(v)
+                            if cleaned:
+                                return cleaned
+    except Exception:
+        pass
 
     return default
 
