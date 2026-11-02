@@ -177,8 +177,9 @@ async def threatshield_firewall(request: Request, call_next):
             log_attack(query, attack, confidence=confidence, severity="HIGH")
 
             return templates.TemplateResponse(
-                "blocked.html",
-                {"request": request}
+                request=request,
+                name="blocked.html",
+                context={"request": request}
             )
 
     response = await call_next(request)
@@ -201,8 +202,9 @@ def home(request: Request):
 
     template_name = "home.html" if (_BASE_DIR / "templates" / "home.html").exists() else "index.html"
     return templates.TemplateResponse(
-        template_name,
-        {"request": request}
+        request=request,
+        name=template_name,
+        context={"request": request}
     )
 
 

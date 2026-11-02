@@ -32,7 +32,11 @@ logs/
 .idea/
 *.sublime-project
 *.sublime-workspace
-.streamlit/
+.streamlit/*
+!.streamlit/config.toml
+
+# Local runtime & Live URLs
+live_url.txt
 
 # Build & Packaging
 build/

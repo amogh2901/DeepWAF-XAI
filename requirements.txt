@@ -4,7 +4,7 @@
 # Or with uv:    uv pip install -r requirements.txt
 
 # ── Core Deep Learning ──────────────────────────────────────────────────────
-tensorflow>=2.13.0,<3.0.0          # DL framework (Conv1D, BiLSTM, etc.)
+tensorflow-cpu>=2.15.0,<3.0.0      # DL framework (CPU-optimized for cloud deployment)
 numpy>=1.24.0,<2.0.0               # Numerical computing
 scipy>=1.11.0                       # Scientific computing (temperature scaling)
 
