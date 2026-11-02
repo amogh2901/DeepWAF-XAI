@@ -38,9 +38,18 @@ CONFUSION_MATRIX_PATH  = os.path.join(MODEL_DIR, "confusion_matrix.png")
 REPORT_PATH            = os.path.join(MODEL_DIR, "classification_report.txt")
 
 # ─────────────────────────────────────────────
-# Database
+# Database Paths (Persistent & Environment-Configurable)
 # ─────────────────────────────────────────────
-LOGS_DB_PATH = os.path.join(DATABASE_DIR, "logs.db")
+DATABASE_DIR = os.getenv("DEEPWAF_DATABASE_DIR", os.path.join(BASE_DIR, "database"))
+os.makedirs(DATABASE_DIR, exist_ok=True)
+LOGS_DB_PATH  = os.getenv("DEEPWAF_LOGS_DB_PATH", os.path.join(DATABASE_DIR, "logs.db"))
+USERS_DB_PATH = os.getenv("DEEPWAF_USERS_DB_PATH", os.path.join(DATABASE_DIR, "users.db"))
+
+# ─────────────────────────────────────────────
+# Backend & Reverse Proxy Services (Configurable for Cloud Deployments)
+# ─────────────────────────────────────────────
+BACKEND_API_URL = os.getenv("DEEPWAF_API_URL", "http://localhost:5000")
+WAF_SERVER_URL  = os.getenv("DEEPWAF_WAF_URL", "http://localhost:8000")
 
 # ─────────────────────────────────────────────
 # Tokenizer / Sequence Settings

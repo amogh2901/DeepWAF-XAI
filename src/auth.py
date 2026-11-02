@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Database path (database/users.db)
 _BASE_DIR = Path(__file__).resolve().parent.parent
-USERS_DB_PATH = _BASE_DIR / "database" / "users.db"
+USERS_DB_PATH = Path(os.getenv("DEEPWAF_USERS_DB_PATH", str(_BASE_DIR / "database" / "users.db")))
 DB_PATH = USERS_DB_PATH
 
 # Master SuperAdmin configuration
@@ -28,10 +28,16 @@ SUPERADMIN_DEFAULT_PASSWORD = "deepwaf"
 
 
 def _get_conn(target_db: Optional[Path] = None) -> sqlite3.Connection:
-    """Return a raw sqlite3 connection to users.db (or target_db)."""
+    """Return a raw sqlite3 connection to users.db (or target_db) with WAL mode enabled."""
     target = target_db or USERS_DB_PATH
     os.makedirs(target.parent, exist_ok=True)
-    return sqlite3.connect(str(target))
+    conn = sqlite3.connect(str(target), timeout=20.0)
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+    except Exception:
+        pass
+    return conn
 
 
 def init_users_table(target_db: Optional[Path] = None) -> None:
@@ -251,15 +257,20 @@ def update_user_passkey(username: str, new_passkey: str) -> bool:
 def count_users_by_role(role: str) -> int:
     """
     Query users.db to return the active count of a given role.
+    Treats 'user' and 'operator' as equivalent standard operator roles.
     """
     init_users_table()
+    role_clean = role.strip().lower()
     try:
         with _get_conn() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                "SELECT COUNT(*) FROM users WHERE LOWER(role) = LOWER(?)",
-                (role.strip(),)
-            )
+            if role_clean in ("user", "operator"):
+                cursor.execute("SELECT COUNT(*) FROM users WHERE LOWER(role) IN ('user', 'operator')")
+            else:
+                cursor.execute(
+                    "SELECT COUNT(*) FROM users WHERE LOWER(role) = LOWER(?)",
+                    (role_clean,)
+                )
             row = cursor.fetchone()
             return row[0] if row else 0
     except Exception as exc:

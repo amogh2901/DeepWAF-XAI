@@ -4,7 +4,11 @@ import pandas as pd
 
 st.title("DeepWAF-XAI Security Dashboard")
 
-conn = sqlite3.connect("database/logs.db")
+import os
+from pathlib import Path
+_base_dir = Path(__file__).resolve().parent.parent
+_db_path = os.getenv("DEEPWAF_LOGS_DB_PATH", str(_base_dir / "database" / "logs.db"))
+conn = sqlite3.connect(_db_path)
 
 df = pd.read_sql_query("SELECT * FROM attack_logs", conn)
 

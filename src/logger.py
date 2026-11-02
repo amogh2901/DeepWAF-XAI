@@ -26,7 +26,12 @@ def log_attack(
     Creates the database directory and table if they do not exist.
     Adds missing optional columns without affecting existing data.
     """
-    db_path = "database/logs.db"
+    try:
+        from src.config import LOGS_DB_PATH
+        db_path = LOGS_DB_PATH
+    except Exception:
+        _base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        db_path = os.getenv("DEEPWAF_LOGS_DB_PATH", os.path.join(_base, "database", "logs.db"))
     try:
         # Ensure the directory for the database exists
         os.makedirs(os.path.dirname(db_path), exist_ok=True)

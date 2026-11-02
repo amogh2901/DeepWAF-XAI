@@ -41,6 +41,16 @@ except ModuleNotFoundError:
     from src import incident_manager
 import json
 from admin_config import ADMIN_PASSKEY
+
+try:
+    import otp_service
+except ModuleNotFoundError:
+    from src import otp_service
+
+try:
+    from config import BACKEND_API_URL, WAF_SERVER_URL, LOGS_DB_PATH, USERS_DB_PATH as CONFIG_USERS_DB_PATH
+except ModuleNotFoundError:
+    from src.config import BACKEND_API_URL, WAF_SERVER_URL, LOGS_DB_PATH, USERS_DB_PATH as CONFIG_USERS_DB_PATH
 try:
     from auth import (
         init_users_table, authenticate_user, register_user, update_user_role,
@@ -665,61 +675,129 @@ if not st.session_state.get("authenticated", False):
             pending_user = st.session_state.get("pending_2fa_user")
 
             if pending_user:
-                # ── Phase 2: Elevated 2FA Terminal Verification ───────────────
+                # ── Phase 2: Privileged Multi-Channel 2FA Verification ─────────
                 pending_role = st.session_state.get("pending_2fa_role", "admin")
                 role_label = "Administrator" if pending_role == "admin" else "Security Tester"
+                two_fa_mode = st.session_state.get("2fa_mode", otp_service.get_otp_delivery_mode())
+                delivery_msg = st.session_state.get("2fa_delivery_msg", "")
+                is_conf = st.session_state.get("2fa_configured", otp_service.is_delivery_configured())
 
-                st.html(f"""
-                <div style="
-                    background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
-                    border: 1px solid #7c3aed;
-                    border-radius: 12px;
-                    padding: 16px 20px;
-                    margin-bottom: 16px;
-                ">
-                    <div style="color: #a78bfa; font-weight: 700; font-size: 16px;">
-                        🔐 Two-Step Verification Required
+                if not is_conf or two_fa_mode == "none":
+                    st.html(f"""
+                    <div style="
+                        background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
+                        border: 1px solid #ef4444;
+                        border-radius: 12px;
+                        padding: 16px 20px;
+                        margin-bottom: 16px;
+                    ">
+                        <div style="color: #fca5a5; font-weight: 700; font-size: 16px;">
+                            ⚠️ Two-Step Verification Required (Cloud Configuration Needed)
+                        </div>
+                        <div style="color: #fee2e2; font-size: 13px; margin-top: 6px; line-height: 1.5;">
+                            Account <b>{pending_user}</b> ({role_label}) requires secondary 2FA verification.<br>
+                            To receive 2FA passcodes on Streamlit Community Cloud, please configure credentials in <b>Streamlit App Settings &rarr; Secrets</b>.
+                        </div>
                     </div>
-                    <div style="color: #c4b5fd; font-size: 13px; margin-top: 4px;">
-                        Account <b>{pending_user}</b> ({role_label}) requires secondary 2FA verification.
-                        A 6-digit one-time passcode has been printed to the <b>secure backend terminal</b>.
+                    """)
+                    with st.expander("🛠️ How to configure Cloud 2FA Secrets (Click to view)", expanded=True):
+                        st.markdown("""
+                        **Option 1: Authenticator App (Recommended - Google Authenticator / Authy / Microsoft Authenticator)**
+                        Add to Streamlit Cloud Secrets:
+                        ```toml
+                        ADMIN_TOTP_SECRET = "DEEPWAFXAI2FA2026"
+                        ```
+
+                        **Option 2: Authenticated SMTP Email Delivery**
+                        Add to Streamlit Cloud Secrets:
+                        ```toml
+                        SMTP_SERVER = "smtp.gmail.com"
+                        SMTP_PORT = 587
+                        SMTP_USERNAME = "your-soc-alert@gmail.com"
+                        SMTP_PASSWORD = "your-app-password"
+                        ADMIN_EMAIL = "admin@yourdomain.com"
+                        ```
+
+                        *(For local development only: set `DEEPWAF_DEV_MODE = "true"` in `.env` to output passcodes to your local console).*
+                        """)
+                else:
+                    if two_fa_mode == "totp":
+                        delivery_header = "🔐 Authenticator App Verification"
+                        delivery_detail = "Enter the current 6-digit passcode from your Authenticator app (Google Authenticator, Authy, or Microsoft Authenticator)."
+                        accent_color = "#38bdf8"
+                    elif two_fa_mode == "email":
+                        delivery_header = "✉️ Security Passcode Dispatched"
+                        delivery_detail = delivery_msg or "A single-use 6-digit security code has been sent to your administrator email address. Valid for 5 minutes."
+                        accent_color = "#34d399"
+                    else:
+                        delivery_header = "🔧 Local Development Mode Active"
+                        delivery_detail = "Dynamic passcode printed to your local terminal console."
+                        accent_color = "#fbbf24"
+
+                    st.html(f"""
+                    <div style="
+                        background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
+                        border: 1px solid {accent_color};
+                        border-radius: 12px;
+                        padding: 16px 20px;
+                        margin-bottom: 16px;
+                    ">
+                        <div style="color: {accent_color}; font-weight: 700; font-size: 16px;">
+                            {delivery_header}
+                        </div>
+                        <div style="color: #e2e8f0; font-size: 13px; margin-top: 4px;">
+                            {delivery_detail}
+                        </div>
                     </div>
-                </div>
-                """)
+                    """)
 
                 otp_input = st.text_input(
-                    "Admin 2FA Terminal Key",
+                    "Admin 2FA Passcode",
                     type="password",
                     key="auth_phase2_otp",
-                    placeholder="Enter 6-digit OTP from backend terminal",
+                    placeholder="Enter 6-digit passcode",
                     max_chars=6
                 )
 
-                col_verify, col_cancel = st.columns([1.2, 1])
+                col_verify, col_resend, col_cancel = st.columns([1.2, 1, 1])
 
                 with col_verify:
                     if st.button("✅ Verify & Sign In", type="primary", use_container_width=True, key="btn_phase2_verify"):
-                        active_otp = st.session_state.get("admin_otp")
-                        if otp_input.strip() and active_otp and otp_input.strip() == str(active_otp):
-                            # Wipe residual session state before setting fresh authenticated session
-                            st.session_state.clear()
-                            st.session_state["authenticated"] = True
-                            st.session_state["username"] = pending_user
-                            st.session_state["role"] = pending_role
-                            st.session_state["pending_2fa_user"] = None
-                            st.session_state["pending_2fa_role"] = None
-                            st.session_state["admin_otp"] = None
-                            st.success("✅ 2FA Verification successful! Loading platform...")
-                            time.sleep(0.3)
-                            st.rerun()
+                        if not is_conf and two_fa_mode == "none":
+                            st.error("❌ 2FA delivery credentials must be configured in Streamlit Cloud Secrets before completing administrator login.")
                         else:
-                            st.error("❌ Invalid 2FA Key. Please verify the code printed in your backend terminal.")
+                            v_ok, v_msg = otp_service.verify_admin_otp(pending_user, otp_input.strip())
+                            if v_ok:
+                                st.session_state.clear()
+                                st.session_state["authenticated"] = True
+                                st.session_state["username"] = pending_user
+                                st.session_state["role"] = pending_role
+                                st.session_state["pending_2fa_user"] = None
+                                st.session_state["pending_2fa_role"] = None
+                                st.success("✅ 2FA Verification successful! Loading platform...")
+                                time.sleep(0.3)
+                                st.rerun()
+                            else:
+                                st.error(f"❌ {v_msg}")
+
+                with col_resend:
+                    if st.button("🔄 Resend Code", use_container_width=True, key="btn_phase2_resend"):
+                        ok_r, mode_r, msg_r = otp_service.generate_and_dispatch_admin_otp(pending_user, purpose="Admin Login Resend")
+                        st.session_state["2fa_mode"] = mode_r
+                        st.session_state["2fa_delivery_msg"] = msg_r
+                        st.session_state["2fa_configured"] = ok_r
+                        if ok_r:
+                            st.toast(msg_r, icon="✉️")
+                        else:
+                            st.error(msg_r)
+                        time.sleep(0.2)
+                        st.rerun()
 
                 with col_cancel:
                     if st.button("↩ Cancel / Go Back", use_container_width=True, key="btn_phase2_cancel"):
+                        otp_service.clear_active_otp(pending_user)
                         st.session_state["pending_2fa_user"] = None
                         st.session_state["pending_2fa_role"] = None
-                        st.session_state["admin_otp"] = None
                         st.rerun()
 
             else:
@@ -763,12 +841,15 @@ if not st.session_state.get("authenticated", False):
                             if role == "blocked":
                                 st.error("⛔ Access Revoked: This account has been blocked by the Administrator.")
                             elif role == "admin":
-                                # Trigger Phase 2: Elevated 2FA ONLY for SuperAdmin (admin)
-                                otp = random.randint(100000, 999999)
-                                st.session_state["admin_otp"] = str(otp)
+                                # Trigger Phase 2: Privileged Multi-Channel 2FA for Administrator
+                                ok_2fa, mode_2fa, msg_2fa = otp_service.generate_and_dispatch_admin_otp(
+                                    login_user.strip(), purpose="Admin Dashboard Login"
+                                )
                                 st.session_state["pending_2fa_user"] = login_user.strip()
                                 st.session_state["pending_2fa_role"] = role
-                                print(f"\n{'='*55}\n  [SECURE SYSTEM LOG] 🛡️  Two-Step 2FA Terminal OTP: {otp}\n  Target Operator: {login_user.strip()} ({role.upper()})\n  Issued at: {time.strftime('%Y-%m-%d %H:%M:%S')}\n{'='*55}\n", flush=True)
+                                st.session_state["2fa_mode"] = mode_2fa
+                                st.session_state["2fa_delivery_msg"] = msg_2fa
+                                st.session_state["2fa_configured"] = ok_2fa
                                 st.rerun()
                             else:
                                 # Security Auditor / Tester (tester) & Standard Operators (user): Direct password login without OTP
@@ -803,6 +884,8 @@ if not st.session_state.get("authenticated", False):
                     st.error("Password must be at least 6 characters long.")
                 else:
                     success, msg = register_user(reg_user, reg_pwd)
+                    if success:
+                        st.session_state["iam_refresh_tick"] = st.session_state.get("iam_refresh_tick", 0) + 1
                     if success:
                         st.success(f"✅ {msg} Switch to the **Sign In** tab to log in.")
                     else:
@@ -2126,11 +2209,15 @@ elif page == "📊 Security Dashboard":
                     except TypeError:
                         st.rerun()
 
-            # Fetch pending IAM requests for tab badge
+            # Fetch pending IAM requests and user directory for tab badges
             pending_requests = get_pending_iam_requests()
             req_tab_title = f"🔐 Pending Requests ({len(pending_requests)})" if pending_requests else "🔐 Pending Requests"
+            _dir_users_all = get_all_users()
+            dir_tab_title = f"👥 User Directory ({len(_dir_users_all)})"
 
-            tab_requests, tab_manage, tab_provision, tab_keys = st.tabs([req_tab_title, "👥 Manage Existing Users", "✨ Provision New User", "🔑 System Passkeys"])
+            tab_manage, tab_requests, tab_provision, tab_keys = st.tabs([
+                dir_tab_title, req_tab_title, "✨ Provision New User", "🔑 System Passkeys"
+            ])
 
             with tab_requests:
                 _ = st.session_state.get('iam_refresh_tick', 0)
@@ -2153,7 +2240,7 @@ elif page == "📊 Security Dashboard":
                     with col_sel_role:
                         # Find current role for default index
                         curr_u_role = next((u[2] for u in _manage_users if u[1] == selected_user), "user")
-                        role_opts = ["user", "admin", "tester", "blocked"]
+                        role_opts = ["user", "operator", "admin", "tester", "blocked"]
                         default_idx = role_opts.index(curr_u_role) if curr_u_role in role_opts else 0
                         selected_new_role = st.selectbox("New Role", role_opts, index=default_idx, key="iam_sel_role")
                     with col_sel_btn:
@@ -2767,6 +2854,26 @@ elif page == "📊 Security Dashboard":
 
     # ---------------- WAF Rate Limiter Events ----------------
     st.markdown("---")
+    
+    # ── Enterprise Architecture & Backend Services Status ─────────────────────
+    with st.expander("🌐 Architecture & Cloud Backend Services Status", expanded=False):
+        st.markdown("#### Distributed Architecture Overview")
+        st.caption(
+            "DeepWAF-XAI operates as a hybrid architecture: the SOC Analytics Console runs natively in this Streamlit "
+            "container with embedded BiLSTM neural detection, while standalone Reverse-Proxy WAF and REST API services "
+            "can be scaled independently on external cloud hosts."
+        )
+        col_s1, col_s2, col_s3 = st.columns(3)
+        with col_s1:
+            st.metric("Streamlit SOC Core", "ACTIVE")
+            st.caption("Native BiLSTM inference & SQLite store operational inside this container.")
+        with col_s2:
+            st.metric("FastAPI WAF Proxy", "STANDALONE")
+            st.caption(f"Service URL: `{WAF_SERVER_URL}`\nDeploy `src/waf_server.py` on Port 8000 to reverse-proxy external HTTP traffic.")
+        with col_s3:
+            st.metric("Flask REST API", "STANDALONE")
+            st.caption(f"Service URL: `{BACKEND_API_URL}`\nDeploy `src/api.py` on Port 5000 for Chrome Extension & Mobile client integration.")
+
     st.markdown("### 🚦 WAF Rate Limiter Events")
     st.caption(
         f"Clients are limited to **5 requests / 10 seconds**. "
@@ -2848,22 +2955,23 @@ elif page == "📊 Security Dashboard":
             if st.button(
                 "🔐 Request Elevated Access OTP",
                 use_container_width=True,
-                help="Generates a one-time 6-digit code printed to the secure backend terminal"
+                help="Generates an elevated access 6-digit security code via your configured 2FA channel"
             ):
-                otp = random.randint(100000, 999999)
-                st.session_state["admin_otp"] = str(otp)
+                ok, mode, msg = otp_service.generate_and_dispatch_admin_otp(current_operator, purpose="Quarantine Management Elevated Access")
+                st.session_state["quarantine_otp_mode"] = mode
+                st.session_state["quarantine_otp_msg"] = msg
+                st.session_state["quarantine_otp_active"] = ok
                 st.session_state["otp_granted"] = False   # reset on new OTP
-                # Simulate secure gateway: print to backend terminal only
-                print(f"\n{'='*55}")
-                print(f"  [SECURE SYSTEM LOG] 🛡️  Elevated Access OTP Generated: {otp}")
-                print(f"  Issued at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
-                print(f"{'='*55}\n")
-                st.toast("✅ OTP sent to secure admin terminal.", icon="🔐")
+                if ok:
+                    st.toast(msg, icon="🔐")
+                else:
+                    st.error(msg)
 
         with col_otp_status:
-            if st.session_state["admin_otp"] is not None:
+            if st.session_state.get("quarantine_otp_active"):
+                q_msg = st.session_state.get("quarantine_otp_msg", "Passcode active.")
                 st.markdown(
-                    """
+                    f"""
                     <div style="
                         background:#1a1a2e;
                         border:1px solid #7c3aed;
@@ -2873,7 +2981,7 @@ elif page == "📊 Security Dashboard":
                         font-size:13px;
                         margin-top:2px;
                     ">
-                        🟡 &nbsp;<b>OTP active</b> — check your backend terminal, then enter it below.
+                        🟡 &nbsp;<b>2FA active:</b> {q_msg}
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -2903,14 +3011,13 @@ elif page == "📊 Security Dashboard":
             "🔑 Enter 6-digit Dynamic OTP",
             type="password",
             key="elevated_otp_input",
-            placeholder="Enter the OTP from your secure backend terminal",
+            placeholder="Enter the 6-digit passcode from your configured 2FA channel",
             max_chars=6,
         )
 
         if entered_otp:
-            if st.session_state["admin_otp"] is None:
-                st.warning("⚠️ No OTP has been generated yet. Click **Request Elevated Access OTP** first.")
-            elif entered_otp == st.session_state["admin_otp"]:
+            v_ok, v_msg = otp_service.verify_admin_otp(current_operator, entered_otp.strip())
+            if v_ok:
                 st.session_state["otp_granted"] = True
             else:
                 st.session_state["otp_granted"] = False
