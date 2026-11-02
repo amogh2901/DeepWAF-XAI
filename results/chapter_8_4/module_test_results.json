@@ -1,0 +1,331 @@
+{
+  "modules": {
+    "User Authentication": {
+      "passed": 6,
+      "failed": 0,
+      "tests": [
+        {
+          "id": "AUTH-01",
+          "description": "Bcrypt hashing generates valid salt and hash",
+          "status": "PASS",
+          "details": "Hash prefix: $2b$12$cml..."
+        },
+        {
+          "id": "AUTH-02",
+          "description": "Valid password matches hash",
+          "status": "PASS",
+          "details": "Verification: True"
+        },
+        {
+          "id": "AUTH-03",
+          "description": "Invalid password rejected",
+          "status": "PASS",
+          "details": "Verification: False"
+        },
+        {
+          "id": "AUTH-04",
+          "description": "SuperAdmin authentication check",
+          "status": "PASS",
+          "details": "Status: SUCCESS"
+        },
+        {
+          "id": "AUTH-05",
+          "description": "User registration and duplicate rejection",
+          "status": "PASS",
+          "details": "Dup msg: User already exists"
+        },
+        {
+          "id": "AUTH-06",
+          "description": "SOC system configuration key retrieval",
+          "status": "PASS",
+          "details": "Key: admin"
+        }
+      ]
+    },
+    "Attack Detection": {
+      "passed": 6,
+      "failed": 0,
+      "tests": [
+        {
+          "id": "DET-01",
+          "description": "SQL Injection payload detection",
+          "status": "PASS",
+          "details": "Predicted: SQL Injection (1.00)"
+        },
+        {
+          "id": "DET-02",
+          "description": "Cross-Site Scripting (XSS) detection",
+          "status": "PASS",
+          "details": "Predicted: Cross Site Scripting (1.00)"
+        },
+        {
+          "id": "DET-03",
+          "description": "Path Traversal (SHELL) detection",
+          "status": "PASS",
+          "details": "Predicted: Path Traversal (1.00)"
+        },
+        {
+          "id": "DET-04",
+          "description": "Phishing URL detection",
+          "status": "PASS",
+          "details": "Predicted: Phishing URL (1.00)"
+        },
+        {
+          "id": "DET-05",
+          "description": "Benign HTTP traffic pass-through",
+          "status": "PASS",
+          "details": "Predicted: Normal (1.00)"
+        },
+        {
+          "id": "DET-06",
+          "description": "Softmax probability distribution bounds [0, 1]",
+          "status": "PASS",
+          "details": "Probabilities bounded [0,1]"
+        }
+      ]
+    },
+    "XAI and Threat Analysis": {
+      "passed": 6,
+      "failed": 0,
+      "tests": [
+        {
+          "id": "XAI-01",
+          "description": "Explanation dictionary schema generation",
+          "status": "PASS",
+          "details": "Risk: HIGH"
+        },
+        {
+          "id": "XAI-02",
+          "description": "SQL Injection key feature attribution",
+          "status": "PASS",
+          "details": "Reasons count: 2"
+        },
+        {
+          "id": "XAI-03",
+          "description": "XSS pattern explanation extraction",
+          "status": "PASS",
+          "details": "Reasons: ['Executable JavaScript detected']"
+        },
+        {
+          "id": "XAI-04",
+          "description": "Path Traversal explanation & risk assignment",
+          "status": "PASS",
+          "details": "Risk: HIGH"
+        },
+        {
+          "id": "XAI-05",
+          "description": "Dynamic risk level assignment",
+          "status": "PASS",
+          "details": "Risk: HIGH"
+        },
+        {
+          "id": "XAI-06",
+          "description": "Benign request explanation evaluates to LOW risk",
+          "status": "PASS",
+          "details": "Risk: LOW"
+        }
+      ]
+    },
+    "Threat Scoring": {
+      "passed": 6,
+      "failed": 0,
+      "tests": [
+        {
+          "id": "SCORE-01",
+          "description": "CRITICAL threat score evaluation (base 95 + boost)",
+          "status": "PASS",
+          "details": "Score: 1.0"
+        },
+        {
+          "id": "SCORE-02",
+          "description": "HIGH severity threat score calculation",
+          "status": "PASS",
+          "details": "Score: 0.91"
+        },
+        {
+          "id": "SCORE-03",
+          "description": "MEDIUM severity threat score calculation",
+          "status": "PASS",
+          "details": "Score: 0.6"
+        },
+        {
+          "id": "SCORE-04",
+          "description": "LOW severity threat score calculation",
+          "status": "PASS",
+          "details": "Score: 0.24"
+        },
+        {
+          "id": "SCORE-05",
+          "description": "Threat score upper bound ceiling (capped at 1.00)",
+          "status": "PASS",
+          "details": "Score: 1.0"
+        },
+        {
+          "id": "SCORE-06",
+          "description": "All scores strictly normalized in [0.0, 1.0]",
+          "status": "PASS",
+          "details": "Scores: [1.0, 0.91, 0.6, 0.24, 1.0]"
+        }
+      ]
+    },
+    "Intelligent Response and Quarantine": {
+      "passed": 6,
+      "failed": 0,
+      "tests": [
+        {
+          "id": "RESP-01",
+          "description": "CRITICAL attack triggers BLOCK action",
+          "status": "PASS",
+          "details": "Action: BLOCKED"
+        },
+        {
+          "id": "RESP-02",
+          "description": "Benign request triggers ALLOW action",
+          "status": "PASS",
+          "details": "Action: ALLOW"
+        },
+        {
+          "id": "RESP-03",
+          "description": "Ambiguous confidence triggers Quarantine",
+          "status": "PASS",
+          "details": "Quarantined: True"
+        },
+        {
+          "id": "RESP-04",
+          "description": "Quarantined request marked as UNKNOWN status",
+          "status": "PASS",
+          "details": "Status: UNKNOWN"
+        },
+        {
+          "id": "RESP-05",
+          "description": "Quarantine persistence to SQLite pending queue",
+          "status": "PASS",
+          "details": "Result: (True, 'Logged')"
+        },
+        {
+          "id": "RESP-06",
+          "description": "Pending quarantine queue retrieval",
+          "status": "PASS",
+          "details": "Pending count: 4"
+        }
+      ]
+    },
+    "WAF and Rate Limiting": {
+      "passed": 5,
+      "failed": 0,
+      "tests": [
+        {
+          "id": "WAF-01",
+          "description": "Initial request under threshold is permitted",
+          "status": "PASS",
+          "details": "Count: 1, Limited: False"
+        },
+        {
+          "id": "WAF-02",
+          "description": "Successive requests within max limit permitted",
+          "status": "PASS",
+          "details": "Count: 5"
+        },
+        {
+          "id": "WAF-03",
+          "description": "Exceeding threshold triggers rate limit breach",
+          "status": "PASS",
+          "details": "Count: 6, Limited: True"
+        },
+        {
+          "id": "WAF-04",
+          "description": "Rate limit breach event persisted to database",
+          "status": "PASS",
+          "details": "Logged event for 192.168.10.217"
+        },
+        {
+          "id": "WAF-05",
+          "description": "Expired rolling window timestamp eviction",
+          "status": "PASS",
+          "details": "Evicted old entries, new count: 1"
+        }
+      ]
+    },
+    "Database Firewall": {
+      "passed": 6,
+      "failed": 0,
+      "tests": [
+        {
+          "id": "DBFW-01",
+          "description": "Inspection blocks unauthorized DROP statement",
+          "status": "PASS",
+          "details": "Reason: Unauthorized SQL pattern detected: DROP"
+        },
+        {
+          "id": "DBFW-02",
+          "description": "Inspection blocks unauthorized ALTER statement",
+          "status": "PASS",
+          "details": "Reason: Unauthorized SQL pattern detected: ALTER"
+        },
+        {
+          "id": "DBFW-03",
+          "description": "Inspection blocks unauthorized TRUNCATE statement",
+          "status": "PASS",
+          "details": "Reason: Unauthorized SQL pattern detected: TRUNCATE"
+        },
+        {
+          "id": "DBFW-04",
+          "description": "Inspection blocks stacked semicolon DROP injection",
+          "status": "PASS",
+          "details": "Reason: Unauthorized SQL pattern detected: DROP"
+        },
+        {
+          "id": "DBFW-05",
+          "description": "Inspection permits parameterized SELECT query",
+          "status": "PASS",
+          "details": "Status: Safe"
+        },
+        {
+          "id": "DBFW-06",
+          "description": "Database firewall logs intercepted query to audit table",
+          "status": "PASS",
+          "details": "Logged to db_firewall_logs"
+        }
+      ]
+    },
+    "Security Logging": {
+      "passed": 5,
+      "failed": 0,
+      "tests": [
+        {
+          "id": "LOG-01",
+          "description": "Structured attack event logging into SQLite database",
+          "status": "PASS",
+          "details": "Successfully inserted into attack_logs"
+        },
+        {
+          "id": "LOG-02",
+          "description": "Attack logs database schema columns verification",
+          "status": "PASS",
+          "details": "Columns verified: ['id', 'request', 'attack_type', 'timestamp', 'attacker_ip', 'confidence', 'severity', 'threat_score', 'prediction_time_ms', 'username']"
+        },
+        {
+          "id": "LOG-03",
+          "description": "Audit trail record persistence and retrieval",
+          "status": "PASS",
+          "details": "Last logged: ('SQL Injection', 'CRITICAL', 0.998)"
+        },
+        {
+          "id": "LOG-04",
+          "description": "Normal traffic event audit logging",
+          "status": "PASS",
+          "details": "Normal event logged"
+        },
+        {
+          "id": "LOG-05",
+          "description": "Payload sanitization function protects logging integrity",
+          "status": "PASS",
+          "details": "Sanitized: &lt;script&gt;alert(1)&lt;/script&gt;"
+        }
+      ]
+    }
+  },
+  "total_executed": 46,
+  "total_passed": 46,
+  "total_failed": 0
+}

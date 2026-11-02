@@ -1,0 +1,697 @@
+============================================================
+FILE: BASE PAPER_BALNet Balanced Attack learning Network for Web Attack Detection via Adaptive Sampling, LDA, and CNNs.pdf (42 pages)
+============================================================
+--- PAGE 1 ---
+Sampling, LDA, and CNNs
+less than 5% of the dataset, experience inadequate recall, thereby obscuring 
+Network (CNN) for the classification of multi-class attacks. Thorough ablation 
+Analysis (PCA), and the evaluation of classification models CNN versus Deep Neural 
+Networks (DNN) and Long Short Term Memory (LSTM) classifiers. The experimental 
+findings reveal that BALNet attains a training accuracy of 99.87%, a test accuracy 
+of 99.79%, and a validation accuracy of 97.31%, with negligible overfitting (training 
+
+--- PAGE 2 ---
+tional Neural Networks (CNNs), Long Short-Term Memory (LSTM) networks, and Deep 
+Although deep learning based intrusion detection systems (IDS) report very high overall 
+gories exhibit extremely low recall despite contributing minimally to aggregate accuracy 
+
+--- PAGE 3 ---
+leading to inflated accuracy of metrics while underperforming rare yet security-critical 
+majority (benign) classes and yielding poor minority recall,and (2) high-dimensionality 
+optimized deep learning architectures, wherein the CNN exhibits superior 
+performance metrics, indicating 99.79% test accuracy, 97.31% validation accuracy, 
+the overall framework and underlying techniques. Section  4 presents the experimen -
+
+--- PAGE 4 ---
+detection of minority attacks while achieving an overall accuracy rate of up to 99.91% on 
+the proposed methodology achieves a detection accuracy of up to 97.71%, exhibits a low 
+imbalanced datasets, the Morris power dataset and CICIDS2017. A CNN - LSTM 
+racy and F1-score, while hybrid sampling leads to performance degradation attributed to 
+data distortion. Oversampling achieves the highest accuracy of 99.47%, recall of 99.49%, 
+and F1-score of 99.46%, with undersampling closely following. In conclusion, the results 
+thetic Sampling (ADASYN) with deep learning models, including CNN–LSTM with 
+
+--- PAGE 5 ---
+accuracy, F1-score, and Area Under the Curve (AUC) metrics than traditional ML and 
+racy levels exceeding 89% accuracy and F1-score and AUC values as high as 0.94. This 
+Liu and Guo [ 16] investigate Weighted Linear Discriminant Analysis (WLDA), which 
+and LDA, in conjunction with six ML models including Deep Feedforward (DFF), CNN, 
+menting prediction accuracy, minimizing dimensionality, and improving interpretability.
+as a benchmark. The authors evaluate ensemble classifiers Random Forest (RF), Gra -
+indicate that Random Forest achieves superior overall performance, reaching 99.06% 
+accuracy with SMOTE and 99.00% with ADASYN, thereby demonstrating strong 
+
+--- PAGE 6 ---
+accuracy
+recall range up to 0.9
+Weighted Linear 
+accuracy
+with CNN, RNN, 
+ADASYN + CNN–
+LSTM with 
+indicates accuracy 
+accuracy exceeding 
+via LSTM 
+LSTM with 
+99.33% overall 
+accuracy and 
+91.95% recall, 
+93% F1-score 
+precision for minority 
+
+--- PAGE 7 ---
+edly enhanced capacity for automatic feature extraction, elevated detection precision, 
+overhead. Overall, this prior work established deep learning as a promising yet evolving 
+CNN–LSTM 
+CNN–LSTM, noting 
+CNN, enhancing mi-
+NSL-KDD Accuracy up 
+BM, achieving notable 
+accuracy, but BALNet 
+CNN feature 
+CNN features, while 
+(ADASYN + LDA + CNN) 
+
+--- PAGE 8 ---
+more accurate, resilient, and interpretable cybersecurity solutions.
+networks (CNNs) for supervised dimensionality reduction. In this approach, LDA is 
+employed to project high-dimensional CNN features into a lower-dimensional space 
+CNN, DNN, and LSTM, each trained and refined to capture diverse feature patterns and 
+through multiple metrics including accuracy, precision, recall and F1-score comple -
+is imperative to note that a high aggregate accuracy metric does not adequately reflect 
+
+--- PAGE 10 ---
+Table 2 illustrates CSV files along with attack profiling for the CIC IDS 2017 [ 9] 
+encoding, as it prepares the classification labels for numerical analysis [ 17], suitable for 
+
+--- PAGE 11 ---
+tioning strategy guarantees equitable evaluation, reproducibility, and statistical valid -
+ity, rendering it particularly suitable for imbalanced, multi-class intrusion detection 
+This imbalance leads to misleadingly high accuracy while yielding poor minority-class 
+detection and high false-negative rates, which are unacceptable in security-critical envi -
+Table 3 categorizes data balancing methodologies by mechanism and relevance to 
+
+--- PAGE 12 ---
+3.5.1 Convolutional neural network (CNN)
+CNNs are supervised deep learning architectures that demonstrate the ability to discern 
+Improves recall for 
+High precision 
+
+--- PAGE 16 ---
+tively which are reflected in inadequate web attack recall despite efficiency. Figure  6 
+
+--- PAGE 19 ---
+requiring 300+ seconds than alternative methods, making it unsuitable for time-sensi -
+Overall, this comparative analysis shows that while every technique corrects class 
+and RUS is unsuitable due to extreme information loss. Based on this analysis, ADASYN 
+
+--- PAGE 21 ---
+this comes at the cost of considerable degradation in accuracy and F1-score, rendering it 
+accuracy, and ≈98.6% F1 while incurring only minimal computational overhead, thereby 
+
+--- PAGE 22 ---
+cation accuracy ≈99% across CNN, LSTM, and DNN architectures. Minority class recall 
+sionality reduction of 96.2%. While this results in notable speedups, it introduces signifi-
+cant performance degradation across all models. Accuracy drops range from 9% to 15%, 
+rather than class separability, leading to increased misclassification, making it unsuitable 
+accuracy reduction of approximately 1% compared to the original feature space, it sig -
+
+--- PAGE 23 ---
+and achieves the best F1-scores among reduced-feature approaches.
+Accuracy: Maintains ≈98% accuracy with acceptable ~1% degradation from the origi -
+Stability: Consistent performance across CNN, LSTM, and DNN architectures
+While the original feature representation yields the highest raw accuracy, its compu -
+performance with minimal accuracy loss and substantial efficiency gains. Consequently, 
+
+--- PAGE 24 ---
+These optimizations are guided by loss and accuracy metrics to ensure effective gener -
+created, exemplified for the 1D CNN in Fig.  21, including various architectural, optimi -
+curves for accuracy and loss versus epochs are plotted. The confusion matrix visualizes 
+sification, which may not be fully captured by accuracy metrics alone. Evaluation strat -
+used across all models. The CNN exhibits consistent performance across all scenarios 
+and RMSProp are detailed. The CNN excels in accuracy and recall when using SGD and 
+accuracy with RMSProp, but at a cost of increased execution time.
+results demonstrate that CNN, LSTM, and DNN exhibit strong performance on the 
+
+--- PAGE 25 ---
+95%. Among these, CNN achieves the highest accuracy at 95.3%, marginally better than 
+LSTM with 95.1% and DNN with 95.0%. The minor performance difference still posi -
+tions CNN as the superior model for this application. In terms of training efficiency, 
+CNN converges fastest, requiring about 13 minutes, followed by DNN at 19 minutes and 
+LSTM at 31  minutes. The extended duration of LSTM training is due to its recurrent 
+Figure 22 illustrates the comparative analysis, assessing CNN attains the highest accu -
+racy and recall at 95.39%, LSTM achieves the optimal precision of 99.39%, and DNN 
+yields superior F1-score of 97.19%. The elevated recall associated with CNN signifies an 
+The negligible performance gap among CNN, LSTM, and DNN suggests that the 
+Precision plots in Fig.  23 are ≈99.3%, indicating a minimal false-positive rate, while 
+recall values from 95.1 to 95.4% demonstrating the models' efficacy in detecting most 
+attack instances. F1-scores are near 97%, indicating a strong balance between precision 
+
+--- PAGE 26 ---
+and recall across various architectural configurations. A comparative analysis of training 
+CNN, LSTM, and DNN architectures trained using the RMSprop optimizer under iden -
+the highest accuracy of 96.27% and F1-score of 97.67%, with the CNN closely following 
+at 96.12%, accuracy and F1 score of 97.58%. The LSTM records marginally inferior yet 
+competitive performance recording an accuracy of 95.47% and an F1-score of 0.9726. 
+The visualization in Fig.  26 depicts precision–recall scatter plot further highlights the 
+high-quality classification behavior of all models, with precision values exceeding 99.4% 
+and recall values above 95.0%.
+Adam optimizer. The Convolutional Neural Network (CNN) attains the highest accu -
+racy of 96.26% and an F1-score of 97.67%, thereby marginally surpassing the perfor -
+mance metrics of both LSTM and DNN architectures.
+In lieu of concentrating exclusively on accuracy, the analysis also assesses architectural 
+
+--- PAGE 28 ---
+complexity, the CNN achieves superior classification performance, highlighting its effi -
+effectiveness is further substantiated in the context of training time, wherein the CNN 
+has the fastest convergence, the DNN incurs moderate training costs, and the LSTM 
+Classification accuracy Correct predictions across all classes
+Precision, recall, F-1 score Per class computation to ass the detection of quality and balance
+Training and validation graphs Accuracy and Loss plots used for monitoring learning and 
+Fig. 21 Hyperparameter search space for 1D CNN
+
+--- PAGE 29 ---
+4.1.9.1 Cross-validation analysis of CNN performance The six-panel visualization 
+in Fig.  29 presents a comprehensive cross-validation (CV) analysis of the CNN model, 
+Panel 1 visualizes CNN Performance across 10 folds illustrate the variability of accu -
+racy, precision, recall, and F1-score across all folds. All performance metrics consistently 
+maintain elevated levels, ranging between 98.5 and 99.5%.This suggests that the CNN 
+Fig. 23 Precision vs. recall plot
+
+--- PAGE 31 ---
+Panel 5 shows mean values of Accuracy, Precision, Recall, and F1-score accompanied 
+reproducibility of CNN's performance.
+Panel 6 compares the original 80–20 holdout accuracy of 96.26% with the cross-vali -
+dation mean accuracy of 98.66%. While cross-validation entails a higher computational 
+stantiate its use. Collectively, this cross-validation investigation reveals that the CNN 
+model consistently achieves accuracy exceeding 98.5% with minimal variance, thereby 
+Fig. 26 Precision vs. recall plot
+
+--- PAGE 32 ---
+findings establish a strong, reproducible baseline for subsequent comparison with LSTM 
+Utilizing an ADASYN-based preprocessing framework alongside CNN model calibrated 
+Fig. 29 Cross validation for CNN model
+
+--- PAGE 33 ---
+10,000 epochs), the model attained a superior test accuracy of 99.79%, a low validation 
+suitable candidate for real-time web attack detection.
+CNN exhibits superior performance in the classification of prominent attack vectors, 
+achieving flawless detection of benign traffic and robust F1-scores for Brute Force (0.94) 
+and SQL Injection (0.90), while its efficacy on infrequent classes, such a XSS give F1 
+Linear Unit (ReLU) activations, demonstrate training accuracy of 99.88% yet encoun -
+tered a decline in validation accuracy of 90.26% alongside an increase in validation loss 
+vergence velocity and training stability. The DNN model demonstrates high accuracy for 
+the Benign and Web Attack Brute Force classes, with F1 scores of 1.0 and 0.90, respec -
+tively. While it maintains a strong F1-score of 0.82 for SQL Injection, its performance on 
+The Long Short-Term Memory (LSTM) model comprises of 256 neurons, with ReLU 
+test accuracy of 98.07%; however, it recorded the lowest validation accuracy of 79.02% 
+ciency. The LSTM model achieves perfect classification for the Benign class but showed 
+high recall with low precision for all attack types. It attains an F1-score of 0.70 for Brute 
+Force and 0.50 for SQL Injection, while XSS detection suffered a low F1-score of 0.11, 
+indicating a tendency to overpredict minority classes with limited precision.
+Table 5 outlines the models compared to different parameters, including training accu-
+racy and loss, test accuracy and loss, validation accuracy, and loss.
+CNN emerged as the most efficient and generalizable model, offering the most advan -
+tageous trade-off between accuracy, stability, and computational efficiency for multi-
+The convergence behavior of the CNN, DNN, and LSTM models is monitored through 
+training and validation of accuracy and loss curves. Despite all three models achieving 
+high training accuracy, their generalization performance varied greatly. The CNN archi -
+Table 5 Performance evaluation for CNN, LSTM and DNN
+Accuracy Loss Accuracy Loss Accuracy Loss
+CNN 99.87 0.0175 99.79 0.0175 97.31 0.118
+LSTM 91.37 0.1334 98.07 0.133 79.02 0.0525
+
+--- PAGE 34 ---
+Table 6 Classification matrix for CNN, DNN and LSTM
+Model Precision Recall F1-score Support
+CNN 1.00 0.89 0.50 0.85 1.00 0.99 0.33 0.95 1.00 0.94 0.40 0.90 33,603 324 6 114
+LSTM 1.00 0.55 0.06 0.42 0.99 0.98 0.83 0.95 0.99 0.70 0.11 0.58 33,603 324 6 114
+
+--- PAGE 35 ---
+The DNN achieves the highest training accuracy; however it demonstrates indications of 
+overfitting, as evidenced by its diminished validation accuracy and increased validation 
+loss in subsequent epochs. In contrast, the LSTM model undergoes a more gradual con -
+vergence, higher training time and shows unstable validation performance. These obser -
+vations highlight the preeminence of CNN model for effective and scalable web attack 
+dation accuracy, while Figs.  31, 33, and 35 depict training and validation of loss across 
+epochs for the CNN, DNN, and LSTM models, respectively.
+Figures 36, 37 and 38 illustrates the confusion matrices for CNN, LSTM, and DNN 
+Fig. 31 Training and validation loss (CNN)
+Fig. 30 Training and validation accuracy (CNN)
+
+--- PAGE 37 ---
+For moderately represented attack classes (Class 1 and Class 3), CNN demonstrates 
+competitive effectiveness. The DNN shows enhanced recall for Class 3. Conversely, 
+CNN achieves a favorable equilibrium between benign traffic identification and attack 
+detection, resulting in the highest overall accuracy and minimal benign-to-attack mis -
+In conclusion, the confusion matrices reveal a distinct trade-off between overall 
+accuracy and sensitivity to rare attacks. While the DNN enhances detection of spe -
+cific minority attacks, the CNN provides the most balanced and practically viable 
+Fig. 35 Training and validation loss (LSTM)
+Fig. 34 Training and validation accuracy (LSTM)
+
+--- PAGE 40 ---
+  • CNN exhibited exemplary generalization capabilities with 99.87% training, 99.79% 
+testing, 97.31% validation accuracy; losses of 0.0175/0.118), characterized by smooth 
+convergence and negligible overfitting. DNN achieved a training accuracy of 99.88% 
+but displayed overfitting of 90.26% validation accuracy, 2.246 loss).
+  • LSTM manifested instability (79.02% validation accuracy) despite a gradual learning 
+  • SQL injections (~21 samples): CNN's 99.79% testing and 97.31% validation accuracy 
+the majority-class bias commonly observed in LSTM and DNN.
+  • For rare attacks (XSS): Elevated testing accuracy coupled with stable validation 
+models; however, CNN's lowest validation loss guarantees the absence of false 
+(Class 0 s accurately classified by all models; however, CNN and LSTM exhibit the 
+recall for SQL Injection. Nevertheless, CNN maintains the most favorable balance 
+overall accuracy with minimal benign-to-attack misclassifications.
+Consequently, BALNet provides an optimal accuracy-stability trade-off for real-time 
+scenarios utilizing dynamic datasets, investigate CNN-LSTM hybrid architectures, 
+
+============================================================
+FILE: Web_Application_Firewall_Using_Machine_Learning_an.pdf (14 pages)
+============================================================
+--- PAGE 2 ---
+and the one-class SVM model. Each of these components
+
+--- PAGE 3 ---
+but the classiﬁcation accuracy was low in comparison with
+decision tree algorithm as a suitable real-time classiﬁer to
+and achieved high accuracy of 98.56% [29]. Hoang X.D
+convolutional neural network (CNN) combined with gated
+achieved 99.00% accuracy [30]. Niu and Li also used only
+
+--- PAGE 6 ---
+ﬁve basic features (see Table 1):
+have four ﬁnal features (see Table 2):
+
+--- PAGE 7 ---
+Sum of ﬁve subfeatures (see Table 3):
+
+--- PAGE 9 ---
+,’_his table is a sample of the dataset generated by our
+requests (see Table 4):
+Linear Regression, Decision Tree, and Naive Bayes but we
+focus on Naive Bayes.
+
+--- PAGE 10 ---
+Bayes, Logistic Regression, Decision Tree, and SVM). Four
+each of the datasets separately (see Table 5).
+Naive Bayes with cross-validation (100 Folds) and
+achieved an accuracy of 98.8% with the dataset created
+with previous models (see Figure 9 or Table 5).
+model achieved high accuracy of 98.8% compared with
+researchers (see Figure 10 or Table 6).
+
+============================================================
+FILE: Deep_Learning_Technique-Enabled_Web_Application_Fi.pdf (16 pages)
+============================================================
+--- PAGE 2 ---
+over any kind of network [5,8]. Attackers are smarter and they ﬁnd adaptable techniques
+model would increase the performance and accuracy of the WAF. The major contributions
+• The proposed model’s performance was evaluated and achieved 97.57% accuracy
+with DDoS detection and 89.34% accuracy with XSS/SQL injection detection.
+
+--- PAGE 13 ---
+in Figure 15, we found that the DDoS module had higher accuracy and recall than the XSS
+and SQL injection module, whereas the XSS and SQL injection module had higher precision
+shown in Table 1. Not one study considered the combination of all three attacks (XSS, SQL,
+Table 1. Model performance comparison in terms of accuracy.
+
+============================================================
+FILE: AI-Enhanced_Web_Application_Shield_for_Real-Time_Threat_Response.pdf (6 pages)
+============================================================
+--- PAGE 1 ---
+93.1% accuracy, with a combined block rate of 94.7% and a
+modular, suitable for integration with existing infrastructures,
+logging for further analysis. Overall, W AF Shield delivers a
+high detection accuracy, and consistent performance under heavy
+traffic loads, making it suitable for modern high-traffic web
+
+--- PAGE 2 ---
+achieving high accuracy with minimal processing cost. Verma
+sion of ModSecurity that uses ML to identify unknown
+liver better detection accuracy for web attacks. Haddadi and
+attacks with improved precision and lower latency. Demetrio
+techniques, enhancing accuracy and throughput.
+such as SQLi and XSS with high precision. Vinayakumar et
+cision and recall:
+Precision = T PT P+ F P, Recall = T PT P+ F N
+detection accuracy when exposed to new attack patterns.
+additional latency and reduces overall responsiveness under
+
+--- PAGE 3 ---
+adaptability, accuracy, and real-time detection capability.
+adaptability and precision. The framework incorporates Lo-
+gistic Regression as an interpretable linear baseline model
+a controlled attack simulation module. The overall dataset
+were standardized and suitable for machine learning-based
+feedback to enhance future detection accuracy.
+detection accuracy. Structural features included HTTP method
+suitable for real-time web traffic classification. The model was
+reduce overfitting while maintaining classification accuracy.
+ization. Figure 1 illustrates the overall system architecture and
+
+--- PAGE 5 ---
+to measure detection accuracy, reliability, and operational
+Accuracy = T P+ T NT P+ T N+ F P+ F N (1)
+Recall = T PT P+ F N (3)
+F 1 = 2 × P recision× RecallP recision+ Recall (4)
+involved quantitative measurements (accuracy, false positives,
+detection accuracy and fewer false positives.
+Accuracy (%) 84.7 93.1
+Precision 0.85 0.93
+Recall 0.81 0.91
+F1-Score 0.83 0.92
+TABLE I. Comparison of Performance Metrics
+the proposed AI W AF Shield is presented in Table I. The
+The baseline values for existing W AFs (84.7% accuracy and
+93.1% accuracy, 0.93 precision, 0.91 recall, and a 0.92 F1-
+requests while maintaining a stable throughput of 510 req/sec
+CPU utilization reached 63%, demonstrating stable operation
+
+--- PAGE 6 ---
+accuracy, 0.93 precision, 0.91 recall, and an F1-score of 0.92.
+demonstrated stable throughput of 510 requests per second, an
+Overall, the AI W AF Shield shows that integrating
+approaches, including LSTM and CNN models, may also
+ModSecurity with Machine Learning,” arXiv preprint arXiv:2406.13547,
+
+============================================================
+FILE: UniEmbed A Novel Approach to Detect XSS and SQL Injection Attacks Leveraging Multiple Feature Fusion with Machine Learning Techniques.pdf (14 pages)
+============================================================
+--- PAGE 1 ---
+an accuracy of 0.9982 and an F1-score of 0.9983, with minimal false positives and false negatives. Similarly, the hard voting
+mance, achieving an F1-score of 0.9980 and accuracy rates exceeding 0.9980 across two datasets. The classiﬁer effectively
+
+--- PAGE 2 ---
+guage processing techniques, the accuracy and robustness of
+suitable for handling unseen data. The fusion of Word2V ec,
+processing techniques, the accuracy and efﬁciency of the
+to improved detection accuracy, enabling our system
+higher precision, reducing false positives and false neg-
+accuracy with far fewer resources, making it more prac-
+Overall, this research presents an innovative and effec-
+
+--- PAGE 3 ---
+patterns from textual data, making them suitable for identi-
+for quick processing of large datasets, making it suitable for
+improved detection accuracy of XSS and SQLi attacks while
+
+--- PAGE 7 ---
+iii. Evaluate model performance using metrics such as accuracy, precision, recall, and 
+F1-score.
+i. Evaluate the hard-voting classifier on the testing set (for XSS and SQLi datasets) using accuracy, precision, 
+recall, and F1-score.
+ii. Evaluate the soft voting classifier on the testing set (for XSS and SQLi datasets) using accuracy, precision, 
+recall, and F1-score.
+
+--- PAGE 8 ---
+ducted. These metrics, such as accuracy, precision, recall,
+and F1-score, offered a thorough understanding of the mod-
+insights into the models’ overall performance and their abil-
+introduced datasets. On the other hand, Table 4 presents a
+comparison of accuracy results achieved on the XSS attack
+sive accuracy of 99.82% and an AUC of 0.9999, showcasing
+strated exceptional precision and recall, with only 3 false
+cases, coupled with accuracy rates exceeding 99.8%. In the
+In the context of Table 4, it is evident that the UniEm-
+outcome achieved the highest accuracy results, outperform-
+XSS attack detection models. The overall results obtained
+accuracy and reliability. These compelling results underscore
+
+--- PAGE 9 ---
+Table 1 Performance
+ML Classiﬁer Accuracy F1-score Recall Precision FP FN ROC-AUC
+SVM 0.9890 0.9898 0.9939 0.9858 21 9 0.9997
+Table 2 Performance comparison
+ML Classiﬁer Accuracy F1-score Recall Precision FP FN ROC-AUC
+SVM 0.9963 0.9945 1.0000 0.9890 25 0 0.9985
+Table 3 Performance comparison
+ML Classiﬁer Accuracy F1-score Recall Precision FP FN ROC-AUC
+SVM 0.9960 0.9945 0.9996 0.9895 24 1 0.9995
+impressive accuracy and ROC-AUC scores. The low false
+
+--- PAGE 13 ---
+Table 4 Comparing accuracy
+ML Classiﬁer Accuracy (%)
+SVM 98.39 95.00 97.99 98.90
+
+============================================================
+FILE: Swift Detection of XSS Attacks Enhancing XSS Attack Detection by Leveraging Hybrid Semantic Embeddings and AI Techniques.pdf (17 pages)
+============================================================
+--- PAGE 1 ---
+achieving superior accuracy, precision, recall, ROC, and F1-score in detecting XSS attacks. This study not only advances XSS
+
+--- PAGE 5 ---
+a suitable form. For example, in [ 31] study, a new feature
+BLSTM proposed network. V arious transformer-based meth-
+
+--- PAGE 7 ---
+representations of web content and enhance the accuracy of
+benign or potentially malicious with high accuracy. Machine
+(SVM), random forests, decision trees, logistic regression, k-
+are illustrated in Table 1.
+convolutional neural networks (CNNs) and recurrent neural
+designed to strike a balance between accuracy and computa-
+
+--- PAGE 8 ---
+Table 1 Hyperparameters description
+SVM gamma:scale
+LSTM Loss: binary crossentropy
+Table 1 (continued)
+CNN Filters in Convolution Layers:128,64,32
+others in terms of accuracy and performance. The chosen
+work (CNN), a basic long short-term memory (LSTM) neural
+tion. The CNN model comprises three convolutional layers,
+are shown in Table 1.
+mal performance with swift detection, the LSTM model
+consists of a single LSTM layer with 20 units and relu
+
+--- PAGE 9 ---
+sure the accuracy, precision, recall, and F1-score of our
+into their overall performance. By utilizing this comprehen-
+The experiment aimed to assess the accuracy and efﬁ-
+architectures, including support vector machines (SVM),
+random forests, decision trees (DT), logistic regression
+culated to determine the overall discrimination ability of each
+learning architectures are shown in Table 1.
+Table 14 illustrates the detection time needed for the pro-
+
+--- PAGE 10 ---
+Table 2 Machine learning results
+with universal sentence encoder Classiﬁer Accuracy% F1-score Recall Precision FP FN ROC-AUC score
+SVM 98.39 0.9853 0.9742 0.9966 5 39 0.9965
+The highest result for the accuracy metric is highlighted in bold
+Table 3 Machine learning results
+with word2vec Classiﬁer Accuracy% F1-score Recall Precision FP FN ROC-AUC score
+SVM 95.00 0.9554 0.9198 0.9939 9 128 0.9907
+The highest result for the accuracy metric is highlighted in bold
+Table 4 Machine learning results
+Classiﬁer Accuracy% F1-score Recall Precision FP FN ROC-AUC score
+SVM 97.99 0.9817 0.9678 0.9959 6 49 0.9907
+The highest result for the accuracy metric is highlighted in bold
+siﬁer demonstrated higher accuracy, precision, and recall
+outperforming other classiﬁers in terms of accuracy, preci-
+sion, recall, and other metrics with good false positive and
+XSS attacks. Overall, our ﬁndings demonstrate the impor-
+
+--- PAGE 12 ---
+the CNN architecture outperformed the other models when
+ally, the superiority of the CNN architecture with Word2V ec
+Table 5 Deep learning results
+with USE DL model Accuracy% F1-score Recall Precision FP FN
+LSTM 97.92 0.9808 0.9778 0.9838 24 33
+CNN 98.08 0.9902 0.9885 0.9919 12 17
+The highest result for the accuracy metric is highlighted in bold
+Table 6 Deep learning results
+with word2vec DL model Accuracy% F1-score Recall Precision FP FN
+LSTM 93.94 0.9435 0.9499 0.9371 93 73
+CNN 97.66 0.9788 0.9603 0.9980 3 61
+The highest result for the accuracy metric is highlighted in bold
+Table 7 Deep learning results
+DL model Accuracy% F1-score Recall Precision FP FN
+LSTM 98.47 0.9858 0.9838 0.9878 18 24
+CNN 99.05 0.9912 0.9946 0.9878 18 8
+The highest result for the accuracy metric is highlighted in bold
+
+--- PAGE 13 ---
+Table 8 Time study results for USE with ML classiﬁers
+SVM 15.8 1.443
+Table 9 Time study results for Word2vec with ML classiﬁers
+SVM 3.857 0.0352
+Table 10 Time study results for USE-Word2vec hybrid model with ML
+SVM 14.38 1.31
+Table 11 Time study results for USE with DL models
+LSTM 10.45 0.095
+CNN 87.91 0.8
+Table 12 Time study results for Word2vec with DL models
+LSTM 9.466 0.961
+CNN 96.04 9.747
+Table 13 Time results for USE-Word2V ec Hybrid Model with DL mod-
+LSTM 17.3 1.5
+CNN 141.9 12.9
+
+--- PAGE 14 ---
+Table 14 Detection time for the proposed approach
+SVM 0.6259 0.23
+LSTM 0.1697 0.062
+CNN 0.2786 0.101
+Upon examining the time study results, a notable pat-
+Naive Bayes classiﬁer exhibited the shortest training time
+LSTM architecture and the second vanilla model. When the
+the LSTM architecture demonstrated the shortest training
+that the LSTM’s architecture, with its recurrent connections
+the hybrid model. This contributed to the LSTM’s faster
+light on the importance of selecting suitable classiﬁers based
+environments, where responsiveness and accuracy are cru-
+
+============================================================
+FILE: L-xaids A LIME-based eXplainable AI framework for intrusion detection systems.pdf (34 pages)
+============================================================
+--- PAGE 1 ---
+Interpretable Model-Agnostic Explanations (LIME) coupled with Explain Like I’m ﬁve (ELI5) and Decision Tree algo-
+able to achieve 85 percent accuracy in classifying attack behaviour on UNSW-NB15 dataset, while at the same time
+interpretable model-agnostic explanations (LIME)
+
+--- PAGE 4 ---
+machine learning algorithms including Naive Bayes (NB),
+Overall, the proposed ensemble technique has a higher
+Recently, XAI had gained notable momentum, as lack of
+higher accuracy as their complexity increases, but this
+Decision tree to make predictions. In [ 34, ] SVM has been
+accuracy and lower false ﬂagging rate [ 45].
+work trafﬁc. However, despite its accuracy, deep learning
+techniques like decision trees, random forest, and support
+
+--- PAGE 6 ---
+overall model. Does not comment or explain how local
+paper does not address the trade-off between accuracy and
+system based on Random Forests and SHAP for explain-
+effective for explaining random forest-based models, they
+are not suitable for all models, and there is no one-size-ﬁts-
+approach on the NSL-KDD dataset using SVM, and LIME
+Balanced Stacked random forest. SHAP was used for
+learning models such as Random Forest, Gradient Boosting
+that the model’s accuracy decreases when dealing with a
+
+--- PAGE 7 ---
+2.4 Local interpretable model-agnostic
+pretable manner. SHAP, while powerful, is computation-
+neural networks (CNNs) and is less suited for tabular IDS
+the users to help understanding the overall nature of the
+
+--- PAGE 8 ---
+accuracy. Figure 4 illustrates the design of the proposed
+making it highly suitable for evaluating IDSs. To assess the
+
+--- PAGE 9 ---
+accuracy. One such technique is using Global explanation
+pretable Model-agnostic Explanations) framework to
+
+--- PAGE 11 ---
+MLP are both interpretable models that can be used for
+global interpretability, which provides an overall under-
+robust and generalizable. Overall, this XAI pipeline can
+making decisions, which can help improve its accuracy and
+The overall goal is not just to make predictions about
+• LIME (Local Interpretable Model-agnostic Explana-
+
+--- PAGE 13 ---
+• Display the model accuracy and classiﬁcation report
+The mathematical equation for Local Interpretable Model-
+simpler, interpretable model g, such as a linear model,
+tradeoff between accuracy and interpretability. The feature
+
+--- PAGE 14 ---
+pretable Model-agnostic Explanations) method, perturb
+explains the importance of the features in a table format as
+lates the change in the prediction accuracy, and records the
+
+--- PAGE 19 ---
+interpretable relationship matrix corroborating the signiﬁ-
+the overall nature of the model as well as specifying the
+Table 1 Test Table
+
+--- PAGE 20 ---
+Table 2 UNSW-NB15 Distribution Sample
+Overall Samples 175,341 100 82,332 100
+
+--- PAGE 21 ---
+processed UNSW-NB15 testing dataset, and their accuracy
+focus on developing interpretable diagrams, feature
+2. LIME (local interpretable model-agnostic explana-
+utmost importance for both detection accuracy as well as
+explainability module. Table 1 illustrates the details of the
+correlation value. Table 2 illustrates the distribution sample
+
+--- PAGE 22 ---
+Fig. 11 Confusion-Precision-Recall Matrix
+
+--- PAGE 24 ---
+Attack. The accuracy of the model against the testing set
+node impurity value, weighted by the probability of
+cision, recall, and F1-score, which inherently capture both
+Speciﬁcally, recall is equivalent to TPR, as it measures the
+tionally, precision accounts for false positives, which
+indirectly reﬂects FPR. The F1-score provides a harmo-
+nized measure of both precision and recall, ensuring a
+In addition to model accuracy and explainability, com-
+pretable decisions for incident response and forensic
+making process. LIME (Local Interpretable Model-
+performance accuracy of 89.83 percent when tested against
+behavior in network trafﬁc with high precision. In order to
+
+--- PAGE 28 ---
+the accuracy of the explanations provided by the algorithm
+Table 3 Comparison of explainable IDS frameworks
+[62] Random Forests SHAP Global U 7 U
+[63] SVM LIME Local 7 UU
+[68] CNN Feature and Model Exploration Local UU 7
+Table 4 Summarized
+Precision Metrics
+Avg Precision 0.835 0.805 0.775
+Macro Avg Precision 0.833 0.800 0.783
+Weighted Avg Precision 0.880 0.863 0.827
+Recall Metrics
+Avg Recall 0.883 0.852 0.815
+Macro Avg Recall 0.873 0.840 0.827
+Weighted Avg Recall 0.843 0.823 0.800
+F1-score Metrics
+Avg F1-score 0.842 0.820 0.785
+Macro Avg F1-score 0.837 0.803 0.767
+Weighted Avg F1-score 0.857 0.823 0.810
+Overall Accuracy 0.85 0.83 0.81
+
+--- PAGE 29 ---
+Table 3 presents a summary of comparison of similar work
+instance-level as well as the overall behavior of the
+Table 4 presents a comprehensive evaluation of the
+The precision metrics indicate how many of the detected
+attack instances were truly attacks. The high weighted
+average precision across all datasets conﬁrms that false
+not overwhelmed with unnecessary alerts. The recall met-
+identiﬁed. Our model maintains high recall across datasets,
+different network environments. The F1-score provides a
+balance between precision and recall, ensuring that neither
+tion performance. Lastly, the overall accuracy, while
+Table 5 evaluates the Intrusion Detection System (IDS)
+Table 5 Additional IDS Metrics
+Across Datasets Dataset FPR TNR MCC FAR Balanced Accuracy
+
+--- PAGE 30 ---
+Accuracy accounts for class imbalances, making it a more
+tains a strong balanced accuracy, conﬁrming that the model
+model remains interpretable without sacriﬁcing accuracy,
+solidiﬁes L-XAIDS as a relevant and adaptable framework
+Overall, L-XAIDS provides a comprehensive and ﬂex-
+ible approach to IDS explainability that is suitable for a
+framework can achieve high accuracy and interpretability
+achieve high-performance overall accuracy of 85 percent in
+accuracy in analyzing Attack or Normal activity in mis-
+
+--- PAGE 33 ---
+62. Wali, S., Khan, I.: Explainable ai and random forest based reli-
+75. Mishra, S., Sturm, B.L., Dixon, S.: Local interpretable model-
+pretable machine learning model of biological age.
+F1000Research 8 (2019)
+84. Du, M., Liu, N., Hu, X.: Techniques for interpretable machine
+

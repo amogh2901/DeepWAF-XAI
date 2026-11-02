@@ -1,0 +1,110 @@
+{
+  "test_samples_total": 19776,
+  "overall_accuracy_pct": 92.59,
+  "payload_length_analysis": [
+    {
+      "group_label": "20 chars",
+      "min_len": 1,
+      "max_len": 35,
+      "sample_count": 17973,
+      "mean_length": 12.9,
+      "accuracy_pct": 93.06,
+      "description": "Short queries & tokens"
+    },
+    {
+      "group_label": "50 chars",
+      "min_len": 36,
+      "max_len": 65,
+      "sample_count": 1351,
+      "mean_length": 44.2,
+      "accuracy_pct": 92.01,
+      "description": "Standard request paths & URLs"
+    },
+    {
+      "group_label": "80 chars",
+      "min_len": 66,
+      "max_len": 99,
+      "sample_count": 278,
+      "mean_length": 79.2,
+      "accuracy_pct": 78.78,
+      "description": "Moderate parameter strings"
+    },
+    {
+      "group_label": "120 chars",
+      "min_len": 100,
+      "max_len": 140,
+      "sample_count": 76,
+      "mean_length": 114.9,
+      "accuracy_pct": 80.26,
+      "description": "Obfuscated / encoded payloads"
+    },
+    {
+      "group_label": "160 chars",
+      "min_len": 141,
+      "max_len": 180,
+      "sample_count": 29,
+      "mean_length": 158.7,
+      "accuracy_pct": 72.41,
+      "description": "Multi-statement attack strings"
+    },
+    {
+      "group_label": "200 chars",
+      "min_len": 181,
+      "max_len": 10000,
+      "sample_count": 69,
+      "mean_length": 301.3,
+      "accuracy_pct": 60.87,
+      "description": "Extended / max-token vectors"
+    }
+  ],
+  "concurrency_latency_analysis": [
+    {
+      "concurrent_requests": 50,
+      "mean_latency_ms": 1209.89,
+      "median_latency_ms": 1229.35,
+      "p95_latency_ms": 1543.94,
+      "total_batch_time_ms": 2008.11,
+      "throughput_rps": 24.9
+    },
+    {
+      "concurrent_requests": 100,
+      "mean_latency_ms": 1652.45,
+      "median_latency_ms": 1734.7,
+      "p95_latency_ms": 2243.17,
+      "total_batch_time_ms": 3766.54,
+      "throughput_rps": 26.5
+    },
+    {
+      "concurrent_requests": 200,
+      "mean_latency_ms": 2458.84,
+      "median_latency_ms": 2521.28,
+      "p95_latency_ms": 3563.6,
+      "total_batch_time_ms": 7548.14,
+      "throughput_rps": 26.5
+    },
+    {
+      "concurrent_requests": 300,
+      "mean_latency_ms": 2965.12,
+      "median_latency_ms": 3213.19,
+      "p95_latency_ms": 4397.85,
+      "total_batch_time_ms": 10633.8,
+      "throughput_rps": 28.2
+    },
+    {
+      "concurrent_requests": 400,
+      "mean_latency_ms": 3721.76,
+      "median_latency_ms": 3860.04,
+      "p95_latency_ms": 5460.74,
+      "total_batch_time_ms": 14731.0,
+      "throughput_rps": 27.2
+    },
+    {
+      "concurrent_requests": 500,
+      "mean_latency_ms": 3380.74,
+      "median_latency_ms": 3163.28,
+      "p95_latency_ms": 6352.39,
+      "total_batch_time_ms": 13194.87,
+      "throughput_rps": 37.9
+    }
+  ]
+}

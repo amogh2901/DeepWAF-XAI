@@ -1,0 +1,518 @@
+=== Final Base Paper.docx (6513 chars) ===
+Base Paper
+Title: BALNet: Balanced Attack Learning Network for Web Attack Detection via Adaptive Sampling, LDA, and CNNs
+Publisher: Springer Nature – Discover Computing
+Year: 2026 ✅
+DOI: 10.1007/s10791-026-10117-w
+Why this paper is selected as the Base Paper
+A base paper should be the research work that is most closely aligned with the problem statement, methodology, and objectives of your project. It should provide the fundamental idea upon which your proposed system is developed while leaving room for meaningful improvements.
+The BALNet paper satisfies these criteria for the following reasons.
+1. It addresses the same research problem
+The primary objective of BALNet is to develop a deep learning framework capable of accurately detecting malicious web attacks by classifying web traffic into multiple attack categories. The paper focuses on improving detection accuracy and reducing false positives through an intelligent learning architecture.
+Similarly, ThreatShield DL aims to detect malicious web requests and classify them into different attack categories such as SQL Injection, Cross-Site Scripting (XSS), Path Traversal, Phishing URLs, and Normal traffic using a deep learning approach.
+Since both works solve the same cybersecurity problem, BALNet forms a strong research foundation.
+2. It belongs to the same research domain
+Both systems fall under the domain of:
+Web Application Security
+Web Attack Detection
+Intrusion Detection
+Artificial Intelligence for Cybersecurity
+Deep Learning-based Security Systems
+This makes the paper directly relevant to your dissertation topic.
+3. It uses Deep Learning
+BALNet employs a Convolutional Neural Network (CNN) for web attack classification.
+ThreatShield DL employs a Bidirectional Long Short-Term Memory (BiLSTM) network.
+Although the architectures differ, both belong to the family of Deep Learning techniques.
+This provides a clear opportunity to compare two different neural architectures while addressing the same problem.
+4. It performs multi-class attack detection
+BALNet performs classification of multiple web attack categories rather than simply distinguishing between normal and malicious traffic.
+ThreatShield DL also performs multi-class classification by identifying:
+SQL Injection
+Cross-Site Scripting (XSS)
+Path Traversal
+Phishing URLs
+Legal Requests
+This similarity makes the comparison meaningful in your dissertation.
+5. Similar Research Objectives
+BALNet
+Detect malicious web attacks
+Improve classification accuracy
+Handle imbalanced attack datasets
+Reduce false positives
+Develop a robust deep learning model
+ThreatShield DL
+Detect multiple web attacks
+Improve detection accuracy
+Provide intelligent threat prediction
+Explain predictions using Explainable AI
+Provide adaptive response recommendations
+Assist security analysts through a web application
+The research goals are highly aligned.
+Comparison between BALNet and ThreatShield DL
+Feature
+BALNet (Base Paper)
+ThreatShield DL (Proposed System)
+Year
+2026
+2026
+Publisher
+Springer Nature
+MCA Research Project
+Research Area
+Web Attack Detection
+Web Attack Detection
+Technique
+CNN
+BiLSTM
+Deep Learning
+✅
+✅
+SQL Injection Detection
+✅
+✅
+XSS Detection
+✅
+✅
+Multi-class Classification
+✅
+✅
+Adaptive Sampling
+✅ (ADASYN)
+❌
+LDA Feature Reduction
+✅
+❌
+Explainable AI
+❌
+✅
+Threat Intelligence
+❌
+✅
+Threat Score
+❌
+✅
+Adaptive Response
+❌
+✅
+Dashboard
+❌
+✅
+SQLite Logging
+❌
+✅
+Streamlit Deployment
+❌
+✅
+Path Traversal Detection
+❌
+✅
+Phishing URL Detection
+❌
+✅
+Research Gap
+Although BALNet demonstrates excellent performance in detecting web attacks using CNNs, several limitations remain.
+It focuses on a CNN architecture, which may not capture long-range sequential relationships in attack payloads as effectively as sequence models such as BiLSTM.
+The framework primarily emphasizes attack detection and does not provide interpretability for its predictions.
+It lacks threat intelligence features to assist users in understanding detected attacks.
+It does not include a threat scoring mechanism to indicate attack severity.
+It does not recommend mitigation strategies after an attack is detected.
+It does not provide an interactive web application for real-time deployment.
+It does not detect additional attack categories such as Path Traversal and Phishing URLs.
+These limitations provide the motivation for developing ThreatShield DL.
+Novelty of ThreatShield DL over BALNet
+ThreatShield DL extends the BALNet framework by introducing several new capabilities.
+Replaces the CNN architecture with a Bidirectional LSTM for improved sequence learning.
+Detects five attack categories, including SQL Injection, XSS, Path Traversal, Phishing URLs, and Normal requests.
+Integrates Explainable AI to provide understandable predictions.
+Generates Threat Intelligence describing detected attacks.
+Computes a Threat Score indicating attack severity.
+Provides Adaptive Response recommendations for mitigation.
+Includes SQLite-based logging for attack history.
+Offers an interactive Streamlit dashboard for real-time monitoring and analysis.
+These enhancements make ThreatShield DL not merely an implementation of BALNet but an extended and more application-oriented system.
+Final Justification
+BALNet: Balanced Attack Learning Network for Web Attack Detection via Adaptive Sampling, LDA, and CNNs (2026) is an appropriate base paper because it satisfies the essential academic requirements:
+✅ Published in 2026 (meets your year requirement)
+✅ Published by Springer Nature
+✅ Experimental research paper (not a survey or review)
+✅ Focuses on deep learning-based web attack detection
+✅ Addresses multi-class web attack classification
+✅ Covers key attack types such as SQL Injection and Cross-Site Scripting
+✅ Shares the same core research objective as ThreatShield DL
+✅ Leaves clear opportunities for improvement, allowing you to justify the novel contributions of your proposed system.
+Verdict: I recommend using BALNet (2026) as the base paper for your MCA dissertation. It aligns well with your project while providing a solid foundation from which you can clearly demonstrate the technical contributions and novelty of ThreatShield DL.
+In one sentence (if your guide asks briefly)
+"I chose BALNet (Springer, 2026) as my base paper because it is a recent experimental deep learning paper on multi-class web attack detection, and my project builds upon it by replacing CNN with BiLSTM and adding Explainable AI, Threat Intelligence, Path Traversal detection, Phishing detection, and real-time deployment features."
+
+============================================================
+
+=== LR .docx (32151 chars) ===
+Mahatma Education Society’s
+Pillai HOC College of Engineering and Technology, Rasayani (Autonomous)
+Department of Computer Application (MCA)
+Academic Year: OSAY 2026-27  Semester:  III   Subject: Research Project(MCARP301)
+Literature Survey
+Group No.: RPG 22
+Title of Research Paper: DeepWAF-XAI: An Explainable Deep Learning Framework for Real-Time Web Attack Detection and Intelligent Threat Mitigation
+Name of Students: 
+Vikas S Bhosale ( SYMCA_ A_ 10)
+Aditya N Chorghe (SYMCA_ A_ 13)
+Amogh P Kalyanshetti ( SYMCA_A_ 36)
+Name of Guide:   Prof. Shweta Patil
+        
+Paper 1 : BALNet: Balanced Attack Learning Network for Web Attack Detection via Adaptive Sampling, LDA, and CNNs
+Authors: Mudita Kohli, Indu Chhabra
+Published:  Springer Nature (2026)
+EXPLANATION
+The research paper "BALNet: Balanced Attack Learning Network for Web Attack Detection via Adaptive Sampling, LDA, and CNNs" proposes a deep learning framework to improve the detection of web attacks by solving two major challenges faced by existing intrusion detection systems: class imbalance and high-dimensional data. The authors used the CIC-IDS2017 dataset, which contains realistic network traffic with normal activities and multiple attack types such as SQL Injection, Cross-Site Scripting (XSS), Brute Force, and other web attacks. Initially, the dataset undergoes data cleaning, encoding of categorical values, normalization, and train-test splitting. To overcome the imbalance between normal and attack records, the framework applies Adaptive Synthetic Sampling (ADASYN), which generates additional samples for minority attack classes. After balancing, Linear Discriminant Analysis (LDA) is used for feature reduction, as it preserves class separability while reducing computational complexity. The study compares LDA with PCA and demonstrates that LDA provides better classification performance. Three deep learning models, namely CNN, DNN, and LSTM, are trained using optimized hyperparameters, while different balancing techniques such as ROS, RUS, SMOTE, and ADASYN are also compared. Model performance is evaluated using accuracy, precision, recall, F1-score, confusion matrix, loss curves, convergence analysis, and 10-fold cross-validation. Experimental results show that the ADASYN-LDA-CNN combination performs the best, achieving 99.87% training accuracy, 99.79% testing accuracy, and 97.31% validation accuracy with very low loss and minimal overfitting. The study concludes that integrating adaptive sampling, supervised feature extraction, and CNN classification creates a reliable and scalable framework for real-time multi-class web attack detection, especially for minority attack classes such as SQL Injection and XSS.
+ADVANTAGES
+The paper provides a strong foundation for my project by demonstrating how balanced data and feature optimization can significantly improve deep learning-based web attack detection.
+The comparison of multiple sampling techniques, feature extraction methods, and deep learning models helped me understand why an optimized deep learning model is more suitable for accurate attack detection.
+LIMITATIONS
+The comparison of multiple sampling techniques, feature extraction methods, and deep learning models helped me understand why an optimized deep learning model is more suitable for accurate attack detection.
+The proposed system emphasizes attack detection but does not provide additional modules such as Explainable AI, Threat Intelligence, Threat Score, or Adaptive Response, which are implemented in Project.
+Paper 2 : Swift Detection of XSS Attacks: Enhancing XSS Attack Detection by Leveraging Hybrid Semantic Embeddings and AI Techniques
+Authors: Rezan Bakır, Halit Bakır
+Published:  Springer Nature (2025)
+EXPLANATION
+This research paper focuses on improving the detection of Cross-Site Scripting (XSS) attacks by combining advanced Natural Language Processing (NLP) techniques with Artificial Intelligence models. The authors explain that traditional XSS detection methods struggle to identify modern and obfuscated attack payloads because they mainly rely on signatures or manually engineered features. To solve this problem, the paper proposes a hybrid semantic embedding approach that combines the Universal Sentence Encoder (USE), which captures the overall meaning of a sentence, with Word2Vec, which learns relationships between individual words. By merging both embeddings, the model extracts both sentence-level and word-level features from XSS payloads. The dataset consists of legitimate web inputs and malicious XSS payloads and is divided into 80% training data and 20% testing data. The proposed features are evaluated using several machine learning models, including Logistic Regression, SVM, Random Forest, Decision Tree, KNN, MLP and Gaussian Naïve Bayes, along with deep learning models such as CNN, LSTM, GRU and two Vanilla Neural Networks. The models are evaluated using accuracy, precision, recall, F1-score, ROC-AUC, confusion matrix, training time and detection time. Experimental results show that the hybrid USE-Word2Vec representation performs better than using either embedding individually. Among machine learning models, Random Forest achieved the highest accuracy of 99.45%, while the second Vanilla Neural Network achieved 99.16% accuracy among deep learning models. The study also demonstrates that the proposed approach provides detection times below 1 ms per sample, making it suitable for real-time web application security. The authors conclude that combining semantic sentence understanding with word-level representations significantly improves the accuracy, speed and reliability of XSS attack detection while reducing false alarms and supporting practical deployment in web security systems.
+ADVANTAGES
+This paper helped me understand how semantic embeddings can improve the detection of XSS attacks by learning the meaning of malicious payloads instead of relying only on keywords.
+The proposed hybrid embedding approach provides an alternative feature extraction technique that can inspire future improvements to the feature representation used in Project.
+LIMITATIONS
+The research is focused only on XSS attacks and does not consider other web attacks such as SQL Injection, Path Traversal or Phishing URL detection, which are included in my project.
+Although many machine learning and deep learning models are compared, the paper does not include explainability, threat intelligence, adaptive response or threat scoring features that are available in My Project.
+Paper 3 : UniEmbed: A Novel Approach to Detect XSS and SQL Injection Attacks Leveraging Multiple Feature Fusion with Machine Learning Techniques
+Authors: Rezan Bakır
+Published:  Springer Nature (2025)
+EXPLANATION
+This research paper proposes UniEmbed, a unified machine learning approach for detecting both Cross-Site Scripting (XSS) and SQL Injection attacks using multiple feature fusion techniques. The authors explain that traditional detection methods often fail to recognize modern attack patterns because they use only a single feature extraction technique. To overcome this limitation, the proposed method combines three Natural Language Processing (NLP) embeddings: Word2Vec, Universal Sentence Encoder (USE), and FastText. These embeddings capture word-level meaning, sentence-level context, and subword information, creating richer feature representations for attack detection. The study evaluates the proposed method on one XSS dataset and two SQL Injection benchmark datasets. After feature extraction, several machine learning classifiers, including Logistic Regression, Support Vector Machine, Decision Tree, K-Nearest Neighbors, Random Forest, Gaussian Naïve Bayes, Multi-Layer Perceptron (MLP), and voting classifiers, are trained and tested. The models are evaluated using accuracy, precision, recall, F1-score, ROC-AUC, false positives, and false negatives. Experimental results show that UniEmbed consistently performs better than individual feature extraction methods. The MLP classifier achieved the best performance with an accuracy of 99.82% for XSS detection and over 99.80% accuracy for SQL Injection detection while maintaining very low false positive and false negative rates. The authors conclude that combining multiple semantic embedding techniques significantly improves the detection of web attacks and provides an accurate and reliable solution for securing modern web applications.
+ADVANTAGES
+Combines multiple embedding techniques to improve feature representation.
+Detects both XSS and SQL Injection with very high accuracy.
+LIMITATIONS
+Focuses only on XSS and SQL Injection attacks.
+Uses only machine learning models without explainable security features.
+Paper 4 : Web-Based Phishing URL Detection Model Using Deep Learning Optimization Techniques
+Authors: K. Barik, S. Misra, R. Mahapatra
+Published:  Springer Nature (2025)
+EXPLANATION
+This research paper presents a deep learning model for detecting phishing URLs by improving both detection accuracy and prediction speed. The authors explain that traditional phishing detection methods often suffer from high false positive rates and cannot effectively identify newly created phishing websites. To overcome these problems, they propose an optimized Convolutional Neural Network (EGSO-CNN), where the CNN architecture is enhanced using an optimization technique to select the best hyperparameters. The study first reviews existing phishing datasets and then creates a web phishing dataset by collecting legitimate and phishing URLs from publicly available sources. The collected data is cleaned, normalized and converted into numerical features before training the model. The proposed EGSO-CNN is compared with other deep learning models such as CNN, LSTM and GRU. Performance is evaluated using accuracy, precision, recall, F1-score, confusion matrix, training and validation curves, and comparisons with existing machine learning and deep learning approaches. The experiments are conducted using both the primary dataset and a secondary dataset to verify the model's reliability. The proposed model achieved 99.44% accuracy, 99.98% precision, 99.21% recall and 99.32% F1-score, outperforming the compared models while maintaining low false positive and error rates. The authors conclude that the optimized CNN model is suitable for real-world phishing detection and can help organizations improve web security. They also suggest extending the work to mobile platforms, IoT devices and large language model-based phishing detection in future studies.
+ADVANTAGES
+The paper demonstrates that hyperparameter optimization can significantly improve the accuracy and reliability of deep learning models for phishing URL detection.
+It validates the proposed model on multiple datasets and compares it with existing machine learning and deep learning methods, making the results more reliable.
+LIMITATIONS
+The model is designed only for phishing URL detection and does not cover other web attacks such as SQL Injection, XSS or Path Traversal.
+The authors mention that the model should be tested on more real-world datasets and cannot effectively detect phishing pages that use embedded objects such as Flash or JavaScript.
+Paper 5 : HawkPhish-DNN Cybersecurity Model: Adaptive Hybrid Optimization and Deep Learning for Enhanced Multi-Objective Phishing URL Detection
+Authors: Saif Ali Abd Alradha Alsaidi, Husam Jasim Mohammed, Riyadh Rahef Nuiaa Al Ogaili, Zeinab Ali Dashoor, Ali Hakem Alsaeedi, Dhiah Al-Shammary, Ayman Ibaida
+Published:  Springer Nature (2025)
+EXPLANATION
+This paper proposes HawkPhish-DNN, a deep learning framework for phishing URL detection that combines Harris Hawk Optimization (HHO) with a Deep Neural Network (DNN). The authors highlight that existing phishing detection methods often produce high false positives or fail to detect newly generated phishing websites. To address this problem, the proposed model first combines the PhishTank, OpenPhish and benign URL datasets into a single dataset. During preprocessing, duplicate URLs are removed, URLs are normalized, and important lexical and domain-based features such as URL length, entropy, domain length and the number of subdomains are extracted. Harris Hawk Optimization is then used to optimize feature selection and model parameters before training the DNN. The model uses ReLU and Sigmoid activation functions to improve learning and classification performance. The proposed approach is compared with existing machine learning and deep learning techniques using evaluation metrics such as accuracy, precision, recall, F1-score and false positive rate. Experimental results show that HawkPhish-DNN achieves an accuracy of 99.6% with a false positive rate of only 0.2%, while maintaining low computational overhead suitable for real-time deployment. The authors conclude that combining optimization algorithms with deep learning improves phishing URL detection and provides a reliable solution for protecting users against evolving phishing attacks.
+ADVANTAGES
+The paper combines an optimization algorithm with deep learning, which improves detection accuracy while reducing false positive predictions.
+The preprocessing and feature extraction techniques provide useful insights for building an efficient phishing URL detection system.
+LIMITATIONS
+The proposed framework is designed only for phishing URL detection and does not address other web attacks such as SQL Injection or XSS.
+The model mainly relies on URL-based features, so advanced phishing attacks using webpage content or visual similarity may still be difficult to detect.
+Paper 6 : Penetration Tests on Web Applications Using SQL Injection Attacks
+Authors: I. D. Ivanov, T. Grigorov and S. Kovacheva
+Published: IEEE (2025)
+EXPLANATION
+This paper focuses on the practical use of penetration testing to identify SQL Injection vulnerabilities in web applications. The authors explain that SQL Injection remains one of the most common web application attacks because insecure input validation allows attackers to execute unauthorized SQL queries on the backend database. The objective of the study is to demonstrate how penetration testing can be used to discover, validate and analyze SQL Injection vulnerabilities before they are exploited by attackers. The testing process begins by identifying user input fields such as login forms, search boxes and URL parameters that interact with the database. Different SQL Injection techniques, including authentication bypass, UNION-based injection and error-based injection, are then performed in a controlled testing environment. The responses from the web application are carefully analyzed to determine whether the attack is successful and to identify the severity of the vulnerability. The effectiveness of the penetration tests is evaluated based on the number of vulnerabilities discovered, the success rate of attack execution and the ability to retrieve unauthorized database information. The study also discusses common security weaknesses that make applications vulnerable, such as improper input validation, insecure SQL query construction and insufficient filtering of user input. The authors conclude that penetration testing is an effective approach for assessing the security of web applications and identifying SQL Injection vulnerabilities before deployment. They recommend using secure coding practices, prepared statements, parameterized queries and regular security assessments to reduce the risk of SQL Injection attacks and improve overall web application security.
+ADVANTAGES
+The paper demonstrates the practical process of validating SQL Injection vulnerabilities through penetration testing, making it useful for understanding real-world attack scenarios.
+It highlights secure coding practices and security assessment methods that can help improve the reliability of SQL Injection detection and prevention systems.
+LIMITATIONS
+The study mainly focuses on experimental penetration testing and does not propose a machine learning or deep learning model for automated attack detection.
+The evaluation is limited to SQL Injection attacks and does not consider other web application threats such as XSS, phishing or path traversal.
+Paper 7 : Phishing Behavior Detection on Different Blockchains via Adversarial Domain Adaptation
+Authors: Chuyi Yan, Xueying Han, Yan Zhu, Dan Du, Zhigang Lu, Yuling Liu
+Published: Springer Nature (2024)
+EXPLANATION
+This paper proposes an intelligent phishing behavior detection model called ADA-Spear for identifying phishing activities across different blockchain networks. The authors explain that newly developed blockchains usually contain limited labeled phishing data, making it difficult for conventional machine learning models to achieve high detection accuracy. To overcome this problem, the proposed model applies adversarial domain adaptation, allowing knowledge learned from one blockchain to be transferred to another with minimal labeled data. The study uses transaction data collected from Ethereum, Bitcoin and EOSIO blockchains. During preprocessing, transaction records are converted into attributed interaction graphs by extracting node features, edge features, temporal information and transaction relationships. A hierarchical graph attention encoder is then used to learn both spatial and temporal characteristics of blockchain transactions. To reduce the differences between source and target blockchains, adversarial domain adaptation is integrated into the training process, enabling the model to learn domain-invariant features. The proposed ADA-Spear model is compared with several existing phishing detection and graph learning methods using evaluation metrics such as Precision, Recall, F1-score and AUC. Experimental results show that ADA-Spear achieves better cross-chain detection performance, with an average F1-score of 77.41% on new blockchain environments after knowledge transfer, outperforming existing approaches. The authors conclude that combining graph neural learning with adversarial domain adaptation provides an effective solution for phishing behavior detection, especially in emerging blockchain platforms where labeled phishing data is limited.
+ADVANTAGES
+The paper introduces adversarial domain adaptation, which enables phishing detection knowledge to be transferred between different blockchain networks, reducing the need for large labeled datasets.
+The combination of graph attention learning and domain adaptation improves the detection of phishing behaviors in newly emerging blockchain environments.
+LIMITATIONS
+The proposed model is designed specifically for blockchain phishing detection and cannot be directly applied to traditional web application attacks such as SQL Injection or XSS.
+The framework is computationally complex because it uses graph construction and adversarial training, making real-time deployment more challenging.
+Paper 8 : L-xaids: A LIME-based eXplainable AI Framework for Intrusion Detection Systems
+Authors: Aoun E. Muhammad, Kin-Choong Yow, Nebojša Bačanin-Džakula, Muhammad Attique Khan
+Published: Springer Nature (2025)
+EXPLANATION
+This paper proposes L-xaids, an Explainable Artificial Intelligence (XAI) framework that improves the transparency of machine learning-based Intrusion Detection Systems (IDS). The authors explain that although modern IDS models can detect cyberattacks with high accuracy, they usually act as black boxes, making it difficult for security analysts to understand why a particular prediction is made. To solve this problem, the proposed framework combines Local Interpretable Model-Agnostic Explanations (LIME), ELI5, and a Decision Tree to generate both local and global explanations for attack predictions. The study uses the UNSW-NB15 intrusion detection dataset, which contains normal network traffic and multiple categories of cyberattacks. During preprocessing, the dataset is cleaned, transformed and prepared for machine learning by handling categorical features and selecting important attributes. The IDS model is trained to classify network traffic, after which LIME explains the prediction for individual samples, while ELI5 and the Decision Tree provide feature importance and overall model behavior. The framework is evaluated using classification accuracy along with qualitative analysis of explanation quality and feature rankings. Experimental results show that the proposed framework achieves 85% classification accuracy on the UNSW-NB15 dataset while successfully identifying the top 10 influential features responsible for attack detection. The authors conclude that combining local and global explanations makes IDS models more transparent, trustworthy and easier for cybersecurity professionals to interpret, supporting the wider adoption of explainable AI in security-critical applications.
+ADVANTAGES
+The paper improves the transparency of intrusion detection by explaining why the model predicts an attack, making security decisions easier to understand and verify.
+It combines both local and global explanations, allowing analysts to interpret individual predictions as well as the overall behavior of the detection model.
+LIMITATIONS
+The framework focuses mainly on explainability and achieves lower detection accuracy than many recent deep learning-based intrusion detection models.
+It is evaluated only on the UNSW-NB15 dataset, so its performance on other datasets and real-world environments requires further validation.
+Paper 9 : BS-GAT: A Network Intrusion Detection System Based on Graph Neural Network for Edge Computing
+Authors: Yalu Wang, Zhijie Han, Ying Du, Jie Li, Xin He
+Published: Springer Nature (2025)
+EXPLANATION
+This paper proposes BS-GAT (Behavior Similarity-based Graph Attention Network), a graph neural network model for detecting network intrusions in edge computing environments. The authors explain that traditional intrusion detection systems and existing graph neural network approaches often suffer from overfitting and fail to capture the relationships between network traffic, resulting in lower detection accuracy, especially for multi-class attacks. To address this problem, the proposed model constructs a graph based on the behavioral similarity of network traffic rather than using conventional graph construction methods. The study uses the NF-BoT-IoT-v2 and NF-ToN-IoT-v2 datasets, which contain normal traffic and multiple attack categories. During preprocessing, the network flow data is cleaned and transformed into graph structures where nodes represent traffic records and edges represent behavioral similarities between them. The model then applies a Graph Attention Network (GAT) with weighted edge relationships to learn both traffic features and graph structural information. The proposed BS-GAT model is compared with several existing machine learning and graph-based intrusion detection methods using evaluation metrics such as accuracy, precision, recall and F1-score. Experimental results show that the model achieves over 99% accuracy, precision, recall and F1-score in binary classification, while obtaining more than 93% accuracy and over 92% weighted F1-score in multi-class classification, outperforming existing approaches. The authors conclude that integrating behavior similarity with graph attention learning significantly improves intrusion detection performance and provides an effective solution for securing edge computing and IoT networks.
+ADVANTAGES
+The paper introduces a behavior similarity graph construction method that improves feature learning and significantly enhances intrusion detection performance in both binary and multi-class scenarios.
+It demonstrates how Graph Attention Networks can effectively capture relationships between network traffic, making the detection model more accurate and robust.
+LIMITATIONS
+The proposed framework is computationally more complex than conventional machine learning models because it requires graph construction and graph neural network training.
+The study is evaluated on edge computing intrusion datasets, so additional validation is required before applying the approach to general web application attack detection.
+Paper 10 : Federated Learning for Intrusion Detection in IoT Environments: A Privacy-Preserving Strategy
+Authors: Ansam Khraisat, Ammar Alazab, Moutaz Alazab, Areej Obeidat, Sarabjot Singh, Tony Jan
+Published: Springer Nature (2025)
+EXPLANATION
+This paper presents a privacy-preserving intrusion detection framework called PEIoT-DS (Privacy-Enhanced IoT Defence System) for securing Internet of Things (IoT) environments using Federated Learning. The authors explain that conventional intrusion detection systems require IoT devices to send their data to a central server for training, which increases privacy risks and communication overhead. To overcome this limitation, the proposed framework allows each IoT device to train the detection model locally and share only model updates instead of raw data. These updates are securely aggregated to create a global intrusion detection model without exposing sensitive information. The study evaluates the framework using real-world IoT intrusion datasets, including N-BaIoT and BoT-IoT, which contain both normal and malicious network traffic. Before training, the datasets are cleaned, normalized and prepared for model learning. Two federated learning algorithms, Federated Averaging (FedAvg) and Federated Averaging with Momentum (FedAvgM), are implemented and compared. The proposed framework is evaluated using metrics such as accuracy, precision, communication efficiency and convergence speed. Experimental results show that FedAvgM converges faster and achieves better intrusion detection performance than the standard FedAvg algorithm while preserving user privacy and reducing communication costs. The authors conclude that federated learning is a practical solution for intrusion detection in distributed IoT environments because it balances detection accuracy, scalability and data privacy without requiring centralized data collection.
+ADVANTAGES
+The paper introduces a privacy-preserving intrusion detection approach where only model parameters are shared, reducing the risk of exposing sensitive user data.
+It compares two federated learning algorithms and demonstrates that FedAvgM improves convergence speed and overall detection performance in distributed IoT networks.
+LIMITATIONS
+The framework is developed specifically for IoT intrusion detection and is not directly designed for web application attacks such as SQL Injection, XSS or phishing URLs.
+Federated learning requires multiple participating devices and additional communication for model aggregation, which increases implementation complexity compared to centralized training.
+Paper 11 : Securing Web Applications Against XSS and SQLi Attacks Using a Novel Deep Learning Approach
+Authors: Jaydeep R. Tadhani, Vipul Vekariya, Vishal Sorathiya, Samah Alshathri, Walid El-Shafai
+Published: Scientific Reports (2024)
+EXPLANATION
+This paper presents a hybrid deep learning approach for protecting web applications against two of the most common cyberattacks: Cross-Site Scripting (XSS) and SQL Injection (SQLi). The authors explain that many existing detection techniques focus only on SQL/XSS payloads or HTTP requests, resulting in higher false positive rates and reduced detection accuracy. To overcome this limitation, the proposed approach combines both payload and HTTP request analysis using a hybrid CNN-LSTM architecture. During preprocessing, SQL and XSS payloads, along with HTTP requests, are decoded, standardized and converted into a suitable format for deep learning. The CNN extracts important spatial features from the input data, while the LSTM captures sequential relationships within requests, enabling the model to recognize complex attack patterns. The framework is evaluated using three datasets: a self-created Testbed dataset, the HTTP CSIC 2010 benchmark dataset, and a SQL/XSS Payload dataset. The proposed model is compared with several traditional machine learning techniques and other deep learning approaches using evaluation metrics such as accuracy, precision, recall, F1-score and false positive rate. Experimental results demonstrate that the hybrid CNN-LSTM model achieves 99.84% accuracy on the SQL/XSS Payload dataset, 99.23% on the Testbed dataset and 99.77% on the HTTP CSIC 2010 dataset, while maintaining a very low false positive rate. The authors conclude that combining CNN and LSTM significantly improves web attack detection and provides a practical solution for securing modern web applications against both SQL Injection and XSS attacks.
+ADVANTAGES
+The paper detects both SQL Injection and XSS attacks using a single hybrid deep learning model, making it more practical than approaches designed for only one attack type.
+It evaluates the proposed method on multiple datasets and achieves consistently high accuracy with a low false positive rate, demonstrating good reliability.
+LIMITATIONS
+The framework mainly focuses on SQL Injection and XSS attacks and does not address other web threats such as phishing URLs or path traversal attacks 
+The hybrid CNN-LSTM architecture requires higher computational resources and longer training time than conventional machine learning models.
+Paper 12 : Intrusion Detection in the Internet of Things Using Convolutional Neural Networks: An Explainable AI Approach
+Authors: Fatemeh Ebrahimi, Reza Javidan, Reza Akbari, Yasin Hosseini
+Published: Springer Nature (2025)
+EXPLANATION
+This paper proposes an explainable intrusion detection framework for Internet of Things (IoT) environments by combining a lightweight one-dimensional Convolutional Neural Network (1D-CNN) with Explainable Artificial Intelligence (XAI) techniques. The authors explain that although deep learning models achieve high intrusion detection accuracy, they usually operate as black-box systems, making it difficult for security analysts to understand why an attack is detected. To overcome this limitation, the proposed framework integrates SHAP (SHapley Additive exPlanations) and LIME (Local Interpretable Model-Agnostic Explanations) with a 1D-CNN model. The study uses the TON-IoT dataset, which contains normal network traffic and multiple categories of IoT attacks. During preprocessing, the data is cleaned, encoded and normalized before being used for training. In the first stage, SHAP is applied to identify the most important features, allowing the model to use a smaller feature set and reduce computational complexity. The optimized features are then used to train the lightweight 1D-CNN model. After prediction, SHAP and LIME generate both global and local explanations, helping users understand the factors that influence each classification. The proposed approach is evaluated using accuracy, precision, recall and F1-score, and its performance is compared with existing intrusion detection methods. Experimental results show that the model achieves an accuracy of 99.5%, with precision of 99.49%, recall of 99.47%, and an F1-score of 99.47%, while maintaining a lightweight architecture suitable for resource-constrained IoT devices. The authors conclude that combining deep learning with explainable AI improves both detection performance and model transparency, making intrusion detection systems more trustworthy and easier to interpret.
+ADVANTAGES
+The paper combines deep learning with SHAP and LIME, allowing users to understand why the model predicts an attack instead of treating it as a black-box system. 
+The lightweight 1D-CNN architecture reduces computational complexity while maintaining high detection accuracy, making it suitable for resource-constrained IoT environments.
+LIMITATIONS
+The framework is evaluated only on the TON-IoT dataset, so additional testing on other datasets is required to verify its generalization capability.
+The study focuses on IoT intrusion detection and is not specifically designed for web application attacks such as SQL Injection, XSS or phishing URL detection.
+
+============================================================
+
+=== Research Paper Info.docx (8261 chars) ===
+Paper 1
+BALNet: Balanced Attack Learning Network for Web Attack Detection via Adaptive Sampling, LDA, and CNNs (2026)
+Simple Explanation
+This paper proposes a web attack detection system using a CNN model. The authors noticed that some attack types had very few samples, which reduced detection accuracy. To solve this, they used adaptive sampling to balance the dataset and LDA for feature extraction before training the CNN. The system was tested on multiple web attack categories and showed improved classification performance.
+What did you learn?
+I learned that balancing the dataset is important because an imbalanced dataset can reduce model accuracy. It also showed that deep learning is effective for web attack detection.
+Why is it related to your project?
+Both projects detect multiple web attacks using deep learning. However, my project uses a Character-Level Stacked BiLSTM model with Explainable AI and Threat Intelligence instead of CNN.
+Guide may ask
+Q: Why didn't you use CNN?
+Answer:
+CNN works well for local patterns, but BiLSTM is better at understanding sequential text such as HTTP requests and URLs.
+Paper 2
+Swift Detection of XSS Attacks Using Hybrid Semantic Embeddings (2025)
+Simple Explanation
+This paper focuses on detecting Cross-Site Scripting (XSS) attacks. The authors used hybrid semantic embeddings to better understand the meaning of web content before classifying it with AI techniques.
+What did you learn?
+I learned that better feature representation improves XSS detection accuracy.
+Why is it related?
+My project also detects XSS attacks, but instead of semantic embeddings, I use character-level tokenization so the model can detect obfuscated payloads.
+Guide may ask
+Q: Why didn't you use semantic embeddings?
+Answer:
+Character-level tokenization is more suitable for web attacks because malicious payloads often contain symbols and special characters that word embeddings may not capture effectively.
+Paper 3
+UniEmbed: Detecting SQL Injection and XSS Using Multiple Feature Fusion (2025)
+Simple Explanation
+This paper combines multiple embedding techniques such as Word2Vec, FastText, and USE to improve SQL Injection and XSS detection.
+What did you learn?
+Combining different feature extraction methods can improve classification accuracy.
+Relation
+My project also detects SQL Injection and XSS, but I use a single Character-Level BiLSTM model instead of combining multiple embeddings.
+Guide may ask
+Q: What is feature fusion?
+Answer:
+Feature fusion means combining different types of features into one representation before classification.
+Paper 4
+Web-Based Phishing URL Detection Using Deep Learning Optimization Techniques (2025)
+Simple Explanation
+This paper focuses only on phishing URL detection. The authors optimized feature extraction using Variational Autoencoders and optimization algorithms before classification.
+What did you learn?
+Feature optimization improves phishing detection accuracy.
+Relation
+My project also detects phishing URLs, but it additionally detects SQL Injection, XSS, Path Traversal, and Normal Traffic.
+Guide may ask
+Q: Does your project only detect phishing?
+Answer:
+No. Phishing detection is only one module. My project performs five-class classification.
+Paper 5
+HawkPhish-DNN Cybersecurity Model (2025)
+Simple Explanation
+This paper proposes a phishing detection model using a Deep Neural Network and Harris Hawk Optimization to improve model performance.
+What did you learn?
+Optimization algorithms can improve deep learning accuracy.
+Relation
+I did not use optimization algorithms because my Character-Level Stacked BiLSTM already achieved good performance.
+Guide may ask
+Q: What is Harris Hawk Optimization?
+Answer:
+It is a nature-inspired optimization algorithm used to find better model parameters automatically.
+Paper 6
+Penetration Tests on Web Applications Using SQL Injection Attacks (IEEE 2025)
+Simple Explanation
+This paper studies SQL Injection by performing penetration testing on web applications. It explains how attackers exploit SQL queries and how developers can identify vulnerabilities.
+What did you learn?
+I understood how SQL Injection attacks work in real applications.
+Relation
+My project automatically detects SQL Injection requests before they reach the application.
+Guide may ask
+Q: Does this paper use AI?
+Answer:
+No. It mainly focuses on penetration testing and attack analysis rather than deep learning.
+Paper 7
+Phishing Behavior Detection via Adversarial Domain Adaptation (2024)
+Simple Explanation
+This paper uses adversarial domain adaptation to improve phishing detection across different blockchain environments.
+What did you learn?
+AI models can be adapted to work across different environments.
+Relation
+My project detects phishing URLs in a general web environment instead of blockchain.
+Guide may ask
+Q: What is domain adaptation?
+Answer:
+It allows a model trained on one dataset to perform well on another related dataset.
+Paper 8
+L-xaids: Explainable AI Framework for Intrusion Detection Systems (2025)
+Simple Explanation
+This paper introduces Explainable AI using LIME to explain intrusion detection decisions. Instead of only predicting attacks, it tells users why a prediction was made.
+What did you learn?
+Explainable AI increases user trust and helps security analysts understand predictions.
+Relation
+My project also includes Explainable AI, but I generate simple human-readable explanations instead of using the LIME framework.
+Guide may ask
+Q: Why is Explainable AI important?
+Answer:
+It helps users understand why the model predicted an attack instead of showing only the final result.
+Paper 9
+BS-GAT: Graph Neural Network Based Intrusion Detection (2025)
+Simple Explanation
+This paper uses a Graph Attention Network (GAT) for intrusion detection by learning relationships between connected data.
+What did you learn?
+Different deep learning architectures can also solve cybersecurity problems.
+Relation
+My project uses Stacked BiLSTM because web requests are sequential text rather than graph data.
+Guide may ask
+Q: Why didn't you use Graph Neural Networks?
+Answer:
+Graph Neural Networks are suitable for graph-structured data, while HTTP requests and URLs are sequential text, making BiLSTM a better choice.
+Paper 10
+Federated Learning for Intrusion Detection in IoT (2025)
+Simple Explanation
+This paper proposes a privacy-preserving intrusion detection system using Federated Learning. Models are trained across multiple devices without sharing raw data.
+What did you learn?
+Federated Learning protects user privacy during model training.
+Relation
+My project uses centralized training because it focuses on web attack detection rather than distributed IoT devices.
+Guide may ask
+Q: Why didn't you use Federated Learning?
+Answer:
+My project is designed for centralized web security. Federated Learning is more suitable for distributed environments such as IoT networks.
+Questions That Almost Every Guide Asks
+Q1. Why did you choose these papers?
+Answer:
+I selected recent IEEE and Springer papers because they focus on deep learning, web attack detection, phishing detection, Explainable AI, and intrusion detection, which are directly related to my project.
+Q2. Which paper influenced your project the most?
+Answer:
+The BALNet paper influenced the deep learning approach for web attack detection, while the L-xaids paper inspired the Explainable AI module.
+Q3. How is your project different from these papers?
+Answer:
+Most papers focus on a single problem such as SQL Injection, XSS, or phishing. My project combines five-class attack detection with Explainable AI, Threat Intelligence, a Character-Level Stacked BiLSTM model, a FastAPI-based Web Application Firewall, a Chrome Extension, and a Streamlit dashboard in one integrated framework.
+Q4. Why did you choose BiLSTM?
+Answer:
+Because HTTP requests and URLs are sequential text. BiLSTM can understand the context from both forward and backward directions, making it effective for web attack detection.
+Q5. Which paper is closest to your project?
+Answer:
+The BALNet paper is the closest because it also focuses on deep learning-based web attack detection. However, my project extends this idea by adding Explainable AI, Threat Intelligence, and intelligent threat mitigation.
+
+============================================================
+
+=== RESEARCH PAPER LIST.docx (3276 chars) ===
+No.
+Paper
+Year
+Publisher
+Main Novelty
+Why it matches ThreatShield DL
+Official Link
+1
+BALNet: Balanced Attack Learning Network for Web Attack Detection via Adaptive Sampling, LDA, and CNNs
+2026
+Springer Nature – Discover Computing 
+Adaptive Sampling + LDA + CNN for multi-class web attack detection 
+Directly aligns with your project's objective of deep learning-based web attack detection (SQLi, XSS, etc.) and serves as the research foundation.
+https://link.springer.com/article/10.1007/s10791-026-10117-w
+2
+Swift Detection of XSS Attacks: Enhancing XSS Attack Detection by Leveraging Hybrid Semantic Embeddings and AI Techniques
+2025
+Springer
+Hybrid semantic embeddings for XSS detection
+Introduces NLP-based semantic embeddings for XSS detection, providing an alternative feature representation approach 
+https://link.springer.com/article/10.1007/s13369-024-09140-0
+3
+UniEmbed: A Novel Approach to Detect XSS and SQL Injection Attacks Leveraging Multiple Feature Fusion
+2025
+Springer
+Multiple Feature Fusion (Word2Vec + USE + FastText) 
+Demonstrates advanced embedding fusion techniques for SQL Injection and XSS detection. 
+https://link.springer.com/article/10.1007/s13369-024-09916-4
+4
+Web-Based Phishing URL Detection Model Using Deep Learning Optimization Techniques
+2025
+Springer
+Variational Autoencoder (VAE) + EGSO Optimization + CNN
+Supports the phishing URL detection module and shows optimization-based feature extraction. 
+https://link.springer.com/article/10.1007/s41060-025-00728-9
+5
+HawkPhish-DNN Cybersecurity Model: Adaptive Hybrid 
+2025
+Springer 
+Harris Hawk Optimization + Deep Neural Network  
+Introduces metaheuristic optimization to improve phishing detection accuracy. 
+https://link.springer.com/article/10.1007/s41870-025-02597-8
+6
+Penetration Tests on Web Applications Using SQL Injection Attacks 
+2025
+IEEE
+Experimental SQL Injection penetration testing 
+Supports the SQL Injection module by demonstrating practical attack validation and security assessment. 
+https://ieeexplore.ieee.org/document/11304111
+7
+Phishing Behavior Detection on Different Blockchains via Adversarial Domain Adaptation
+2024
+Springer
+Adversarial domain adaptation for phishing behavior
+Presents domain adaptation rather than conventional classifiers
+https://link.springer.com/article/10.1186/s42400-024-00237-5
+8
+L-xaids: A LIME-based eXplainable AI Framework for Intrusion Detection Systems
+2025
+Springer
+Explainable AI (LIME-based IDS)
+Supports the Explainable AI module of ThreatShield DL by providing interpretable attack predictions and improving user trust.
+https://link.springer.com/article/10.1007/s10586-025-05326-9
+9
+BS-GAT: A Network Intrusion Detection System Based on Graph Neural Network for Edge Computing
+2025
+Springer
+Graph Attention Network (GAT)
+Introduces Graph Neural Networks for intrusion detection, offering a different deep learning architecture compared to CNN and BiLSTM.
+https://link.springer.com/article/10.1186/s42400-024-00296-8
+10
+Federated Learning for Intrusion Detection in IoT Environments: A Privacy-Preserving Strategy
+2025
+Springer
+Federated Learning
+Introduces privacy-preserving distributed learning, extending intrusion detection beyond centralized deep learning models.
+https://link.springer.com/article/10.1007/s43926-025-00169-7
+
+============================================================
+

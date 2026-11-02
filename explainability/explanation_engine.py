@@ -7,6 +7,8 @@ This module DOES NOT modify the prediction.
 It only explains why the prediction was made.
 """
 
+import re
+
 
 class ExplanationEngine:
     """Generate human-readable explanations for ThreatShield predictions."""
@@ -97,9 +99,16 @@ class ExplanationEngine:
         # ---------------- Phishing ----------------
         elif prediction == "Phishing URL":
 
-            risk_level = "MEDIUM"
+            risk_level = "HIGH" if any(k in payload for k in ("bank", "account", "verify", "login", "credential", "secure")) else "MEDIUM"
 
-            reasons.append("Suspicious URL characteristics detected")
+            if any(k in payload for k in ("bank", "account", "verification", "verify", "login", "signin", "credential")):
+                reasons.append("Credential or financial harvesting keyword identified")
+
+            if re.search(r'https?://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', payload):
+                reasons.append("Raw IP address used as URL host (domain evasion indicator)")
+
+            if not reasons:
+                reasons.append("Suspicious URL characteristics detected")
 
             explanation_text = (
                 "The Deep Learning model identified characteristics "

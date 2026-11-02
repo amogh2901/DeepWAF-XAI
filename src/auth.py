@@ -23,7 +23,7 @@ USERS_DB_PATH = _BASE_DIR / "database" / "users.db"
 DB_PATH = USERS_DB_PATH
 
 # Master SuperAdmin configuration
-SUPERADMIN_USERNAME = "amogh"
+SUPERADMIN_USERNAME = "admin"
 SUPERADMIN_DEFAULT_PASSWORD = "deepwaf"
 
 
@@ -38,7 +38,7 @@ def init_users_table(target_db: Optional[Path] = None) -> None:
     """
     Initialize the users and system_config tables and ensure all required columns exist.
     Inspects existing columns via PRAGMA table_info(users) and adds missing columns dynamically.
-    Automatically seeds or updates the master SuperAdmin ('amogh') with password 'deepwaf'.
+    Automatically seeds or updates the master SuperAdmin ('admin') with password 'deepwaf'.
     """
     try:
         with _get_conn(target_db) as conn:
@@ -95,9 +95,29 @@ def init_users_table(target_db: Optional[Path] = None) -> None:
             local_now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             cursor.execute("UPDATE users SET created_at = ? WHERE created_at IS NULL", (local_now_str,))
 
-            # ── Auto-Seed & Force-Update SuperAdmin 'amogh' ───────────────────
+            # ── Auto-Migrate Legacy 'amogh' Administrator to 'admin' ──────────
             cursor.execute(
-                "SELECT id FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1",
+                "SELECT id, password, soc_passkey FROM users WHERE LOWER(username) = 'amogh' AND LOWER(role) = 'admin' LIMIT 1"
+            )
+            old_admin_row = cursor.fetchone()
+            if old_admin_row:
+                cursor.execute(
+                    "SELECT id FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1",
+                    (SUPERADMIN_USERNAME,)
+                )
+                existing_new_admin = cursor.fetchone()
+                if not existing_new_admin:
+                    cursor.execute(
+                        "UPDATE users SET username = ?, role = 'admin', is_locked = 0 WHERE id = ?",
+                        (SUPERADMIN_USERNAME, old_admin_row[0])
+                    )
+                    logger.info(f"[Auth] Migrated legacy administrator 'amogh' to '{SUPERADMIN_USERNAME}'.")
+                else:
+                    cursor.execute("DELETE FROM users WHERE id = ?", (old_admin_row[0],))
+
+            # ── Auto-Seed & Force-Update SuperAdmin 'admin' ───────────────────
+            cursor.execute(
+                "SELECT id, password FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1",
                 (SUPERADMIN_USERNAME,)
             )
             admin_row = cursor.fetchone()
@@ -111,8 +131,8 @@ def init_users_table(target_db: Optional[Path] = None) -> None:
                 logger.info(f"[Auth] Master SuperAdmin '{SUPERADMIN_USERNAME}' seeded successfully.")
             else:
                 cursor.execute(
-                    "UPDATE users SET password = ?, role = 'admin', is_locked = 0 WHERE id = ?",
-                    (admin_hash, admin_row[0])
+                    "UPDATE users SET role = 'admin', is_locked = 0 WHERE id = ?",
+                    (admin_row[0],)
                 )
                 logger.info(f"[Auth] Master SuperAdmin '{SUPERADMIN_USERNAME}' credentials verified.")
 
@@ -271,12 +291,10 @@ def register_user(username: str, password: str) -> Tuple[bool, str]:
     if not username or not password:
         return False, "Username and password required."
 
-    init_users_table()
+    if username.lower() == SUPERADMIN_USERNAME.lower():
+        return False, f"{username} is a reserved administrator username and cannot be registered."
 
-    # Enforce USER capacity limit (Max 5 standard user / operator accounts)
-    current_user_count = count_users_by_role("user") + count_users_by_role("operator")
-    if current_user_count >= 5:
-        return False, "Maximum of 5 USER accounts reached."
+    init_users_table()
 
     hashed = hash_password(password)
     created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -301,7 +319,7 @@ def register_user(username: str, password: str) -> Tuple[bool, str]:
 def authenticate_user(username: str, password: str) -> Dict[str, Any]:
     """
     Authenticate a user by verifying credentials against the database.
-    Implements enterprise brute-force tracking and automatic lockout (except SuperAdmin 'amogh').
+    Implements enterprise brute-force tracking and automatic lockout (except SuperAdmin 'admin').
     Returns a dictionary response:
       - SUCCESS: {"status": "SUCCESS", "role": role, "message": "Credentials verified"}
       - LOCKED:  {"status": "LOCKED", "message": "Account Locked. Please request an unlock below."}
@@ -352,7 +370,7 @@ def authenticate_user(username: str, password: str) -> Dict[str, Any]:
                 new_attempts = failed_attempts + 1
                 new_locked = 0
 
-                # SuperAdmin 'amogh' is shielded from account lockout (Anti-DoS)
+                # SuperAdmin 'admin' is shielded from account lockout (Anti-DoS)
                 is_superadmin = (username.lower() == SUPERADMIN_USERNAME.lower())
                 if new_attempts >= 5 and not is_superadmin:
                     new_locked = 1
@@ -392,6 +410,9 @@ def request_account_reset(username: str) -> Tuple[bool, str]:
     username = username.strip()
     if not username:
         return False, "Username required."
+
+    if username.lower() == SUPERADMIN_USERNAME.lower():
+        return False, "The SuperAdmin account cannot be unlocked or reset through the standard operator request system."
 
     init_users_table()
     try:
@@ -444,6 +465,9 @@ def admin_resolve_request(username: str, new_password: Optional[str] = None) -> 
     username = username.strip()
     if not username:
         return False, "Username required."
+
+    if username.lower() == SUPERADMIN_USERNAME.lower():
+        return False, "The SuperAdmin account cannot be unlocked or reset through the standard operator request system."
 
     init_users_table()
     try:
@@ -504,10 +528,6 @@ def update_user_role(username: str, new_role: str) -> Tuple[bool, str]:
                 if count_users_by_role("tester") >= 3:
                     return False, "Maximum of 3 TESTER accounts reached. Demote an existing tester first."
 
-            if new_role in ["user", "operator"] and curr_role not in ["user", "operator"]:
-                if (count_users_by_role("user") + count_users_by_role("operator")) >= 5:
-                    return False, "Maximum of 5 USER accounts reached."
-
             if new_role == "tester":
                 cursor.execute(
                     "UPDATE users SET role = ?, soc_passkey = COALESCE(soc_passkey, 'tester123') WHERE LOWER(username) = LOWER(?)",
@@ -539,6 +559,9 @@ def provision_manual_user(username: str, password: str, role: str = "user") -> T
     if not username or not password:
         return False, "Username and password required."
 
+    if username.lower() == SUPERADMIN_USERNAME.lower():
+        return False, f"{username} is a reserved administrator username and cannot be registered."
+
     if len(password) < 6:
         return False, "Password must be at least 6 characters."
 
@@ -547,9 +570,6 @@ def provision_manual_user(username: str, password: str, role: str = "user") -> T
     # Enforce Role Capacity Limits
     if role == "tester" and count_users_by_role("tester") >= 3:
         return False, "Maximum of 3 TESTER accounts reached. Demote an existing tester first."
-
-    if role in ["user", "operator"] and (count_users_by_role("user") + count_users_by_role("operator")) >= 5:
-        return False, "Maximum of 5 USER accounts reached."
 
     hashed = hash_password(password)
     created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

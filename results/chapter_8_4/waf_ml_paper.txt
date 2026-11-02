@@ -1,0 +1,1206 @@
+=== Page 1 ===
+Research Article
+Web Application Firewall Using Machine Learning and
+Features Engineering
+Aref Shaheed
+ 1 and M. H. D. Bassam Kurdy
+2
+1Department of Web Technologies, Syrian Virtual University, Damascus, Syria
+2Department of Artiﬁcial Intelligence, Syrian Virtual University, Damascus, Syria
+Correspondence should be addressed to Aref Shaheed; aref_90718@svuonline.org
+Received 22 May 2021; Revised 12 July 2021; Accepted 26 March 2022; Published 6 June 2022
+Academic Editor: David
+Megias
+Copyright © 2022 Aref Shaheed and M. H. D. Bassam Kurdy. ,’_his is an open access article distributed under the Creative
+Commons Attribution License, which permits unrestricted use, distribution, and reproduction in any medium, provided the
+original work is properly cited.
+Webapplicationsecurityhasbecomeamajorrequirementforanybusiness,especiallywiththewidewebattacksspreadingdespite
+thedefensivemeasuresandthecontinuousdevelopmentofsoftwareframeworksandservers.Inthisstudy,wepresentaproposed
+model for a web application ﬁrewall that used machine learning and features engineering to detect common web attacks. Our
+proposed model analyses incoming requests to the webserver, parses these requests to extract four features that describe
+completely HTTP request parts (URL, payload, and headers), and classiﬁes whether a request is normal or an anomaly. We took
+intoconsiderationthelimitationofpreviousworksthatuseURLandpayloadonlyinclassiﬁcationandprovidedﬁvefeaturesthat
+describe and summarize all parts of the HTTP request using features engineering and previous experience in the ﬁeld of the
+software security domain. Extracted features are length of request, percentage of characters allowed, percentage of special
+characters, and attack weight. ,’_hese features were calculated for four diﬀerent datasets CSIC 2010, HTTPParams 2015, Hybrid
+dataset(CSIC2010andHTTPParams),andreallogsforthecompromisedwebserver.Weevaluatedourproposedmodelbyusing
+these updated datasets with four classiﬁcation algorithms (Naive Bayes, logistic regression, decision tree, and support vector
+machine) with two methods(train testsplitandcross-validation) to negatetheprobability ofoverﬁttingand ensurethat features
+are eﬀective. Features values for a normal request are usually short request length, large allowed character ratio, small special
+characterratio,andzeroattackweightorclosetozero.Featuresvaluesforanomalyrequestsarelargerequestlength,smallallowed
+characterpercentage,largespecialcharacterpercentage,andverylargenumericallyattackweight.Ourproposedmodelachieveda
+classiﬁcation accuracy of 99.6% with datasets used in research studies in this ﬁeld and 98.8% with datasets of real web servers.
+1.Introduction
+Cyberattacks targeting web servers and applications were
+and still is one of the important points that are taken into
+consideration when an organization uses technology in its
+various types of work (applications, operating systems,
+databases,networks,etc.),andtheseattacksremainhighrisk
+despite the great diversity in the methods of combating
+them.,’_hislimitedtheimpactoftheseattacksbutwasunable
+to make a tangible eﬀect.
+Despitetheimplementationofdefensivemeasuresbyweb
+application developers, attacks are constantly evolving, and
+there has become an urgent need for dedicated software or
+productthatsupportsthesedefensiveproceduresandworksin
+anintegratedmannerwiththesedefensiveprocedurestoraise
+thesecuritylevelofwebapplications[1].Securityprojectsand
+standards were published to help developers and white hat
+hackers to increase the security level such as OWASP [2].
+Traditionalﬁrewallsinteractwithpacketsinnetworkand
+transport layers [3], while web application ﬁrewalls interact
+withwebrequestsintheapplicationlayer[4].,’_heseﬁrewalls
+were operated using the signature [5], as they recognize the
+attack through a distinct ﬁngerprint of it, and this requires
+large databases and storing the ﬁngerprint of each attack
+after it is executed. Reliance on databases (signature-based
+protection)andhardcodedlogicandrules(usingtraditional
+programming) make it more diﬃcult to take advantage of
+expert knowledge by transferring it to the computer.
+Hindawi
+Security and Communication Networks
+Volume 2022, Article ID 5280158, 14 pages
+https://doi.org/10.1155/2022/5280158
+
+=== Page 2 ===
+In recent decades, artiﬁcial intelligence has become a
+scientiﬁc revolution [6] and has achieved peerless superi-
+ority in mastering the work that humans do, and we think
+that a computer cannot learn and make decisions like
+humans, but rather it has become a competitor to human
+capabilities. In the coming decades, it is expected that ar-
+tiﬁcial intelligence would eliminate many human jobs[7].
+Researchers and informationsecurityprofessionalshave
+speciﬁcally moved to harness the capabilities of artiﬁcial
+intelligence to detect and combat attacks [8]. ,’_he time has
+comeforthemachinetoworksidebysidewiththehumanto
+do what is diﬃcult for him despite having hundreds of
+millions of real neurons.
+Most recent works relied on one dataset only and work
+with URL and payload only. In this article, we used features
+engineering to present four generalizable features that
+summarize the whole HTTP request information (URL,
+payload, and headers) and we used four classiﬁcation al-
+gorithms in machine learning in the classiﬁcation phase to
+evaluate our proposed model.
+,’_he rest of this article is organized as follows: Section 2
+presentsmaterialsandmethods(relatedworksandproposed
+model), Section 3 discusses results and discussion, Section 4
+gives the conclusion, and Section 5 contains future work.
+2.Materials and Methods
+2.1.RelatedWorks. Vulnerabilities of web applications have
+not changed as concepts; it changes in how to exploit them.
+,’_he most popular vulnerabilities of web applications are as
+follows:
+(i) Injections: manipulating the input to force a web
+application to execute arbitrary commands in the
+operating system and queries in databases [9], SQL
+injectionisthemostfamousofinjectionattacks[10],
+and it allows the attacker to interact with the da-
+tabase by reading, writing, and modifying records.
+(ii) Broken authentication: exploiting logical and
+weakness points in the authentication mechanism
+to takeover and control accounts [11].
+(iii) Sensitive data exposure: manipulating a web ap-
+plication to make it throw exceptions and expose
+sensitive data such as credentials of the database
+[12].
+(iv) XML external entity (XXE): manipulating inputs
+using functions that parse XML to execute arbi-
+trary commands [13].
+(v) Broken access control: accessing unauthorized
+resourcesinawebapplicationduetotheweakness
+of access control rules such as accessing the ad-
+ministratorpanelifthereisnorestrictiononaccess
+to it [14].
+(vi) Security misconﬁgurations: using brute force to
+ﬁndandexploitsecuritymisconﬁgurationssuchas
+unpatched ﬂaws, default conﬁgurations, unused
+pages, unprotected ﬁles and directories, and un-
+necessary services [15].
+(vii) Cross-site scripting (XSS): injecting JavaScript
+codeinawebapplicationtomodifythedisplayofa
+web application and force the victim to execute it
+in his browser; there are many types of it, such as
+Reﬂected XSS and DOM XSS [16].
+(viii) Insecure deserialization: manipulating the inputs
+of a web application by deserializing it, modifying
+it, and serializing it again to compromise the web
+application [17].
+(ix) Usingcomponentswithknownvulnerabilities:stop
+updating the used component in a web application
+allowsattackerstoexploititsknownvulnerabilities;
+this type of vulnerability is found in abundance,
+especially in CMS web applications [18].
+(x) Insuﬃcient logging and monitoring refer to the
+lack of logging and monitoring mechanisms and
+techniques, which allow attackers to ﬁnd and ex-
+ploit without being detected [19].
+Studies and research about protecting web applications
+from malicious requests were following two methodologies
+to detect an attack: identify and detect a particular attack
+(such as detection of the SQL injection attack only or cross-
+site scripting attack detection) or classify requests if it is an
+anomalyornormalingeneral,regardlessofthetypeofattack.
+It also followed two approaches to transfer this experi-
+ence to computers: designing and implementing behavioral-
+based detection by using artiﬁcial intelligence techniques
+suchasclassiﬁcationalgorithmsorusingacustomalgorithm,
+and signature-based detection by using databases that con-
+tain patterns of attacks.
+Most of the studies relied on old datasets such as CSIC
+2010 [20], ECML-PKDD 2007 [21]. ,’_he proposed models
+were not evaluated using modern datasets, and the datasets
+created by some researchers are not available online.
+Zhangetal.proposeda frameworkto detectwebattacks
+by extracting seven features, web resource, attribute se-
+quence, attribute value, HTTP version, header, and header
+inputvalue.,’_hisframeworkincludesthreecomponents:the
+probability distribution model, the hidden Markov model,
+and the one-class SVM model. Each of these components
+canbeconsideredasamachinelearningmodel.Eachmodel
+trained on a dataset contains normal requests only and is
+evaluatedbyusingtwodatasets:Wikipediaaccesstraces[22]
+and FuzzDB [23]. Using a multimodel-based method takes
+advantage of all models in it, by this method, the authors
+mitigated false positive issue signiﬁcantly [24]. ,’_he main
+advantageofthismodelisthatittakesadvantageofmultiple
+components by combining them in a hybrid one. On the
+other side, running multiple components may aﬀect per-
+formance. WAF is a real-time service that handles many
+requestsandperformanceisanimportantparametertotake
+into consideration.
+Tekerek and Bay provided a hybrid model for the de-
+tection of malicious and normal requests using signature-
+based detection to overcome speed issue for traditional
+attacks and behavioral-based detection to solve zero-day
+attacks issue using neural networks with three features
+2 SecurityandCommunicationNetworks
+
+=== Page 3 ===
+described by mathematical equations as input to this neural
+network [25]. ,’_he advantages of this model are that it used
+hybrid detection methods (signature-based and behavioral-
+based) indetectionthat increasethe performance andspeed
+ofimplementation.Inadditiontothesimplicityandspeedof
+implementation of the neural network, this research has
+undergonesuccessivedevelopmentworkinrecentyearsand
+themodelismature.Ontheotherside,thefeaturesextracted
+cannot be generalized for all web applications (values of the
+features calculated depends on average and derivation of
+other requests, it requires a massive log of an application to
+make the model able to classify the requests arrived at this
+application).Inaddition,theusageofstatisticalfunctionsgives
+anomalycasesthatcannotbehandled(usingtheaverageinthe
+denominatorof2generatesaverybignumberofrequeststhat
+its length is near to the average of request lengths).
+Sharma et al. used features engineering to extract seven
+features from the incoming request and used three classi-
+ﬁcation algorithms to test their eﬀectiveness. ,’_hey applied
+preprocessing procedures on CSIC 2010 dataset to identify
+subcategories for malicious requests to overcome missing
+features issue [26]. ,’_his method yielded many useful fea-
+tures, but some of these features cannot be extracted from
+the dataset that used in this article due to the unavailability
+of its ﬁelds in the dataset, such as the length of cookies (you
+can review the structure of the CSIC 2010 dataset). In ad-
+dition, researchers did not use another dataset and relied
+only on CSIC 2010.
+Vartounietal.appliedn-gramcharacter-basedmodelto
+constructfeatures.,’_hesizeoffeaturesincreaseddependson
+the value ofn; to overcome this issue and avoid using di-
+mensionality decrease techniques, they applied an autoen-
+coder to extract features as a data abstract. Deep learning
+algorithmswereusedtoworkmoreeﬀectivelywithextracted
+features. ,’_his proposed model gave a generalizable model,
+but the classiﬁcation accuracy was low in comparison with
+other models. In addition to use a single dataset, refer CSIC
+2010 [27].
+Hoang used supervised machine learning (inexpensive
+decision tree algorithm as a suitable real-time classiﬁer to
+mitigate performance issue in terms of speed) to detect four
+majorwebattacks(SQLi,XSS,commandinjection,andpath
+traversal) and N-gram used with ﬁxedn value (n�3) and
+PCA (principal component analysis) method to obtain a
+reduced number of features. He used the HTTPParams
+dataset [28] and CSIC 2010 to evaluate the proposed model
+and achieved high accuracy of 98.56% [29]. Hoang X.D
+proposed model takes web server logs as input and turns
+everysinglerowintoavector,resultsofthemodelonlyfocus
+on the HTTPParams dataset, and experiments done used
+only one algorithm.
+Niu and Li extracted eight statistical features and used
+convolutional neural network (CNN) combined with gated
+recurrent unit (GRU) with CSIC 2010 dataset. Using these
+techniques together with eight features improved detection
+performance but at the expense of speed performance. ,’_hey
+evaluated the detection performance of this model by
+comparing it with other deep learning methods and they
+achieved 99.00% accuracy [30]. Niu and Li also used only
+one dataset (CSIC 2010). In addition, using deep learning
+techniques for real-time services like WAF will aﬀect speed
+performance if they deploy it in a real environment.
+All of these previous studies deal with the request if it is
+normal or anomaly; it used the second methodology of
+detection.
+Otherstudiesdetectspeciﬁcattacks,suchasdetectingan
+attackofdatabaserights;itusedtheﬁrstmethodology,asthe
+following study of Dr. Ahmad Ghafarian, in which he
+providedanapproachthatputsalineineachtableandused
+an algorithm that it executes to verify queries before exe-
+cutingitonthewebapplication.Maliciousrequestsfetchthe
+addedlineandthenormalrequestsdonotfetchit.,’_hisway,
+an SQL injection attack is detected in real time before it is
+executed on the web application, but the proposed model
+reveals only one of the seven types mentioned by the re-
+searcherinhisarticle.In addition,thisstudydidnotdiscuss
+the overload on resources, databases, and the delay in ex-
+ecutiontimeduetotestingeachquerybeforeexecuting[31].
+,’_here are many studies similar to the study of Dr.
+Ahmad Ghafarian that detect SQL injection in runtime like
+AMNESIA (proposed by Halfond and Orso) [32] and
+CANDID (proposed by Bisht, Madhusudan, and Ven-
+katakrishnan) [33].
+2.2. Proposed Model
+2.2.1. Architecture. Our proposed model of WAF works as
+an operating system service, which acts as an intermediary
+between the web server and the clients. ,’_his service receives
+the request, parses it, extracts features, classiﬁes it, and
+makes decisions based on the classiﬁcation result.
+WAF can be conﬁgured through a dedicated web ap-
+plication (web control panel, see Figure 1). ,’_he proposed
+WAFconsistsofthefollowingﬁvebasicunits(seeFigure2):
+(1) Power on/oﬀ unit
+(2) Training unit
+(3) Parsing unit
+(4) Classiﬁcation unit
+(5) Decision-making unit
+,’_heprocessstartsintheﬁrstunit,thepoweron/oﬀunit,
+when the WAF is running, the OS service contacts the
+databaseandfetchestheconﬁgurationstorunWAF,initiate
+thelistener,andwaitforincomingrequestsfortheWAFthat
+mediates between the client and the web server.
+After running the WAF, the training process starts
+using the selected dataset and the selected classiﬁcation
+algorithm.
+After the completion of the training process and the
+completionoftheworkoftheﬁrstandsecondunits,WAFis
+ready to receive requests.
+Whentherequestarrives,WAF,theﬁrstunittohandleit
+is the parsing unit, which breaks down the request, extracts
+thefeatures,andpassesitasavectortotheclassiﬁcationunit
+that classiﬁes according to the classiﬁcation methodthat the
+administrator chooses it in the training unit.
+SecurityandCommunicationNetworks 3
+
+=== Page 4 ===
+Afterclassifying therequest,theclassiﬁcationunitsends
+the result to the decision-making unit, which takes the
+appropriate action to pass or drop the request (see Figure 3
+or Algorithm 1).
+(1)Poweron/OﬀUnit.,’_hisunitisresponsibleforcontrolling
+WAF by turning it on and oﬀ. When the WAF started, all
+conﬁgurations will be fetched from the database such as the
+IPaddressandportoftheﬁrewall,IPaddress,andportofthe
+web server to run the service (the listener).
+(2) Training Unit. After running WAF, the dataset name
+and classiﬁcation algorithm will be fetched from
+databases to train the model, now WAF is ready to re-
+ceive requests.
+We used popular classiﬁcation algorithms, any algo-
+rithm can be added by inserting its name in the database
+(algorithms table) and call it programmatically in the WAF
+implementation code.
+In addition, any dataset can be added by inserting its
+nameinthedatabase(datasetstable)andaddingtheCSVﬁle
+of the desired dataset in the dataset folder inside the WAF
+implementation code folder.
+Used algorithms are Naive Bayes, Logistic Regression,
+Decision Tree, and Support Vector Machine (popular al-
+gorithms in binary classiﬁcation problems) [34].
+Web Service
+Client
+Control Panel
+WAF
+Web Server
+Figure 1: Architecture of the web server environment with proposal WAF.
+Request
+Training Unit Parsing Unit ClassificationUnit DecisionMaking UnitPower Unit
+Is Normal
+request?
+No Yes
+Drop request and
+redirect to custom page Pass to web server
+Figure 2: Units of proposal WAF (brief diagram).
+4 SecurityandCommunicationNetworks
+
+=== Page 5 ===
+We preferred to use these algorithms instead of neural
+networks, which can be used in future works (see Future
+works for Researchers section).
+Used datasets include CSIC 2010, HTTPParams 2015,
+Hybrid dataset (Generated by combining CSIC 2010 and
+HTTPParams 2015), and Custom dataset (logs of real web
+servers).
+(3) Parsing Unit. After turning on WAF and the training
+model, now WAF is ready to receive requests. When an
+HTTPrequestarrivesatWAF,theparsingunitbreaksdown
+the request to extract features (features will be discussed in
+the next section).
+,’_he parsing unit creates a ﬁnal vector consisting of
+features and passed this vector to the classiﬁcation unit.
+Start
+Get Configuration from Database
+Power On W AF
+Start W AF Listener
+Training Model using Dataset and
+New Request
+Arrived?
+Parse Request to retrieve Basic Features
+Extract Final Features from parsed request
+Wait for New Requests
+Classify request
+Is Request
+Normal?
+Drop request
+Redirect to custom page with
+message “ Attack !!”
+Pass request to Web Server
+Store all data in database
+End
+No Yes
+No Yes
+Parsing Unit
+Classification Unit
+Classification Unit
+Power Unit
+Decision Making Unit
+Algorithm (got from Configuration)
+Figure 3: Units of proposal WAF (detailed diagram).
+SecurityandCommunicationNetworks 5
+
+=== Page 6 ===
+Parsing unit implemented using MITMProxyinPython
+[35].
+(4) Classiﬁcation Unit. ,’_his unit receives the ﬁnal vector
+fromtheparsingunitandclassiﬁestherequestdependingon
+it. ,’_he classiﬁcation unit sends the classiﬁcation results to
+decision-making unit.
+(5) Decision-Making Unit. ,’_his unit receives the classiﬁca-
+tion results from the classiﬁcation unit and forwards the
+request to the web server if the request is normal, and drops
+the request if it is an anomaly.
+2.2.2. Features Engineering. When an HTTP request arrives
+at the parsing unit, it is dismantled to extract the basic
+features,andthesebasicfeatureswillbeusedtocalculatethe
+ﬁnal features that will be sent to the classiﬁcation unit (see
+Algorithm 2).
+(1) Basic Features. All basic information extracted directly
+from the request is called a basic feature; it is the content of
+HTTP Message [36], in our proposed model, and we have
+ﬁve basic features (see Table 1):
+(1) HTTPMethod:HTTPprotocol,method,orverbthat
+is used by the client to request the resource from the
+webserver,itmaybePOST,GET,HEAD,OPTION,
+PUT, PATCH, or DELETE
+(2) Absolute URL (URL): it includes the IP address or
+domain of a web application with the resource, for
+example, https://www.mysite.com/login
+(3) Payload: all data submitted by the client (text input,
+dropdown menu, text area, etc.)
+(4) Headers: request headers (original headers or
+custom headers added by the client or web
+application)
+(5) Files: it is usually included in the payload but we
+separated it as an independent feature
+(2)FinalFeatures.FinalfeaturesusedbyWAFtoclassifythe
+request if it is normal or anomaly; these features are cal-
+culated and extracted based on the basic features, and we
+have four ﬁnal features (see Table 2):
+(1) Inputlength:itdescribesthenumberofcharactersin
+payload, and it is calculated as follows:
+l � 􏽘
+n
+i�0
+ci, (1)
+where l is the input length, c is the character in
+payload, andn is the payload length.
+Usually, this feature value is bigger in anomaly re-
+quests compared to normal requests (see Figure 4).
+(2) Alphanumeric character ratio: it describes the ratio
+of alphanumeric characters over the input length.
+Normal requests usually contain more numeric and
+alphabetic characters compared to specialcharacters
+such as symbols, so this feature will have a big value
+in normal requests compared to anomaly requests
+(see Figure 5).
+,’_his feature is calculated as follows:
+a � 􏽘
+n
+i�0
+ci|ci∈ e  􏼁
+l ×100, (2)
+Input of data:d (dataset), a (algorithm), p1 (web server port), i1 (web server IP), p2 (WAF port), i2 (WAF IP).
+(1) Start
+(2) Connect to database to initialize Inputs (d, a, p1, i1, p2, i2)
+(3) Start WAF listener using Inputs (p1, i1, p2, i2)
+(4) Training WAF using Inputs (d, a)
+(5) While WAF listener is “ON”:
+(6) If new request arrived R:
+(7) Parse R
+(8) Compute basic features vector B from parsed R
+(9) Compute V Final features vector from B
+(10) Compute C (class) of parsed request R by classify based on V
+(11) If C �“anomal”
+(12) Drop request
+(13) Redirect to custom page with message “Attack”
+(14) Else//C �‘normal’
+(15) pass request to web server
+(16) Store V and C in database
+(17) Endif
+(18) Endif
+(19) EndWhile
+(20) End
+ALGORITHM 1: Units of proposal WAF (detailed algorithm).
+6 SecurityandCommunicationNetworks
+
+=== Page 7 ===
+where a is the alphanumeric character ratio,c is the
+character in payload,n is the payload length,eis the
+cluster of allowed characters (alphabet and num-
+bers), and l is the input length.
+(3) Specialcharacterratio:itdescribestheratioofspecial
+characters(nonalphanumeric)overtheinputlength.
+Anomaly requests usually contain fewer numeric
+and alphabetic characters compared to special
+characterssuchassymbols,sothisfeaturewillhavea
+big value in anomaly requests compared to normal
+requests (see Figure 6).
+,’_his feature is calculated as follows:
+s � 􏽘
+n
+i�0
+ci|ci∈ f  􏼁
+l ×100, (3)
+wheresisthespecialcharacterratio, cisthecharacter
+in payload,n is the payload length,f is the cluster of
+not allowed characters (any character that is not
+alphabet and numbers), andl is the input length.
+Alternatively, it can be calculated as follows:
+s � 1 − a, (4)
+where s is the special character ratio anda is the
+alphanumeric character ratio.
+(4) Attackweight:itisthemostimportantfeatureinthe
+classiﬁcation process. It is calculated by summing
+four subfeatures.
+Anomaly requests usually have a big attack weight
+compared to normal requests (see Figures 7 and 8).
+Input of data:R raw HTTP request
+Output: V Final features vector
+(1) Start
+(2) parseR
+(3) computeB basic features vector from parsedR
+(4) computeV Final features vector fromB
+(5) End
+ALGORITHM 2: Features extraction from raw HTTP request by parsing unit.
+Table1: Basic features of the proposed model.
+Feature Description
+HTTP
+method HTTP protocol method
+URL IP address or domain of web application withresource
+Payload All data submitted from the client
+Headers Request headers
+Files Uploaded ﬁles in payloads
+Table2: Extracted features of the proposed model.
+Feature Description
+Input length Number of characters in payload
+Alphanumeric
+character ratio
+,’_he ratio of alphanumeric characters
+over input length
+Special characters ratio,’_heratioofnonalphanumericcharactersover input length
+Attack weight
+Sum of ﬁve subfeatures (see Table 3):
+(i) URL weight
+(ii) Number of attack words in inputs
+(iii) Manipulate payload weight
+(iv) Alphanumeric character to special
+character ratio
+(v) Files weight
+60
+70
+50
+40
+30
+20
+10
+0
+0 200 400 600 800 1000
+Number of requests
+Frequencies in Dataset
+Figure4:Histogramimplementationofinputlengthfeatureinthe
+CSIC 2010 dataset; green values represent normal request and red
+values represent anomaly requests.
+80
+60
+40
+20
+0
+02 0 4 0 60 80 100 120 140
+Number of requests in Dataset
+Frequencies in Dataset
+Figure 5: Histogram implementation of alphanumeric character
+ratio feature in the CSIC 2010 dataset; green values represent
+normal request and red values represent anomaly requests.
+SecurityandCommunicationNetworks 7
+
+=== Page 8 ===
+(1) URL weight
+,’_he value of this subfeature is initialized to
+zero. Value of this subfeature for each dis-
+covered special character, attack word, or
+access of unauthorized resource.
+Each discovered malicious have its weight.
+,’_his subfeature is calculated as follows:
+u � 􏽘
+n
+i�0
+wi|di∈ URL  􏼁, (5)
+where u is the URL Weight, d is the discovered
+malicious, wisthe weight of discovered malicious,n
+is the number of discovered malicious in WAF
+database, and URL is request absolute URL.
+Example: http://www.example.com/.env.
+u �200 (200 isthe weight ofdiscovered access
+of unauthorized resource—only one discov-
+ered malicious in URL).
+(2) Number of attack words in inputs
+,’_he value of this subfeature is initialized to
+zero. Value of this subfeature for each dis-
+covered attack word in payload and headers.
+Each discovered word attack has its own
+weight.
+,’_his subfeature is calculated as follows:
+v � 􏽘
+n
+i�0
+wi|di∈ Input  􏼁, (6)
+where vis the number of attack words in inputs,dis
+the discovered attack word,w is the weight of attack
+word, n is the number of attack words in WAF
+database, and Input is request headers and payloads.
+Example: Email�aref@mail.com & passwd�’
+or 1�1 --&mode�’ or 1�1 --
+v �150+150 (150 is the weight of discovered
+SQLI, it exists twice).
+(3) Manipulate payloads weight
+,’_he value of this subfeature is initialized to
+zero.,’_hevalueofthissubfeatureincreases for
+each discovered manipulate in payload and
+headers.
+Manipulation is passing wrong data to the
+application to throw an exception and to
+expose sensitive data, for example, passing a
+string as a mobile number.
+Each discovered manipulation has its own
+weight.
+,’_his subfeature is calculated as follows:
+m � 􏽘
+n
+i�0
+wi|di∈ Input  􏼁, (7)
+where m is the manipulate payload weight,d is the
+discovered manipulation, w is the weight of dis-
+covered manipulation, n is the number of manip-
+ulations in WAF database, and Input is request
+headers and payloads.
+80
+60
+40
+20
+0
+500000 100000 150000 200000 250000 300000
+Number of requests in Dataset
+Frequencies in Dataset
+Figure 8: Histogram implementation of attack weight feature in
+CSIC 2010 dataset for anomaly request.
+80
+60
+40
+20
+0
+–20 0 20 40 60 80 100
+Number of requests in Dataset
+Frequencies in Dataset
+Figure 7: Histogram implementation of attack weight feature in
+the CSIC 2010 dataset for normal request and red values represent
+anomaly requests.
+80
+60
+40
+20
+0
+–40 –20 0 20 40 60 80 100
+Number of requests in Dataset
+Frequencies in Dataset
+Figure 6: Histogram implementation of special character ratio
+feature in the CSIC 2010 dataset; green values represent normal
+request and red values represent anomaly requests.
+8 SecurityandCommunicationNetworks
+
+=== Page 9 ===
+Example:Email �aref@
+mail.com&mobile �Hello
+m �100 (100 is the weight of discovered
+manipulation in payload, passing a string as a
+mobile number—only one discovered ma-
+nipulation in URL).
+(4) Alphanumeric characters to special character
+ratio
+,’_he value of this subfeature is the result of
+dividing alphanumeric character ratio over
+special characters ratio.
+If alphanumeric character ratio or special
+character ratio equals zero then set subfeature
+value to zero.
+,’_his subfeature is calculated as follows:
+r �
+500, sa􏼒 􏼓≥0.3,
+0, sa􏼒 􏼓<0,
+⎧⎪⎪⎪⎪⎪⎨
+⎪⎪⎪⎪⎪⎩ (8)
+where r is the alphanumeric character to special
+character ratio,s is the special character ratio, anda
+is the alphanumeric character ratio.
+Example: Email �aref@mail.com&passwd �’
+or 1�1 -- &mode�’ or 1�1 --
+a �40/55 (all numbers and alphabet number
+over input length).
+s �15/55 (count of nonalphanumeric char-
+acters such as’�- @. and)
+s/a � 0.375
+r �500.
+(5) Files weight
+,’_he value of this subfeature is initialized to
+zero. Value of this subfeature increases for
+each suspicious discovered in ﬁles.
+Suspicious cases:
+(i) Invalid ﬁle extension (.exe,.bin,.php, etc.)
+(ii) Positive resultsofantivirusscanning(we used
+three antiviruses: Kaspersky, MalwareBytes,
+and BitDefender)
+Each discovered malicious have its weight.
+,’_his subfeature is calculated as follows:
+f � w1 + w2 + w3 + w4, (9)
+where f is the ﬁles weight, w1 � (300 if ﬁle
+extension is invalid or 0 if ﬁle extension is
+valid), w2 �(200ifKasperskydetectthisﬁleas
+virus or 0 if not),w3 � (200 if MalwareBytes
+detect this ﬁle as virus or 0 if not), andw4 �
+(200ifBitDefenderdetectthisﬁleasvirusor0
+if not).
+Example: uploaded ﬁle: shell.php
+w1 �300 (invalid extension).
+w2 �200 (Kaspersky detected it as virus).
+w3 �200 (MalwareBytes detected it as virus).
+w4 �200 (BitDefender detected it as virus).
+f �300+200+200+200 �900.
+You have to calculate it for each uploaded ﬁle
+andsumtheresultstogettheﬁnalﬁlesweight
+for all ﬁles in request as follows:
+F � 􏽘
+n
+i�0
+fi, (10)
+whereFisthe ﬁlesweight, nis the number ofﬁles in
+request, andf is the ﬁle weight.
+Finally, the value of the attack weight feature is calcu-
+lated by summing all subfeatures as follows:
+z � u + v + m + r + F, (11)
+where z is the attack weight,u is the URL Weight,v is the
+number of attack words in inputs,m is the manipulation
+payload weight, r is the alphanumeric character to special
+character ratio, andF is the ﬁles weight.
+Now,allrequestsareconvertedfromtherawformtothe
+ﬁnal form (four features with the label).
+,’_his table is a sample of the dataset generated by our
+model, label is 1 for anomaly requests and 0 for normal
+requests (see Table 4):
+3.Results and Discussion
+AsetofgeneralizablefeaturesextractedfromHTTPrequests
+to detect common attacks on web applications.
+We used four datasets: CSIC 2010, HTTPParams 2015,
+Hybrid dataset (CSIC+HTTPParams), and custom web
+server logs (compromised real server). ,’_he last dataset was
+not published in the GitHub repository due to its privacy.
+We used four basic extracted from HTTP requests to
+calculatetheﬁnalfeatures,basicfeaturesareHTTPProtocol
+(HTTP Method), Absolute URL (URL), payload, headers,
+and ﬁles. Extracted features are the length of request, per-
+centage of characters allowed, percentage of special char-
+acters, and attack weight.
+We used various classiﬁcation algorithms that work
+more eﬃciently on binary classiﬁcation problems, such as
+Linear Regression, Decision Tree, and Naive Bayes but we
+focus on Naive Bayes.
+3.1. Experiments
+3.1.1. Experimental Environment. WAF implemented in
+web server under Linux Xubuntu 20.04 LTS. ,’_his server
+contains apache2 service (web service), web control panel
+(web application developed using Django-Python), and
+WAF service (daemon service).
+3.1.2. Preprocessing Datasets. Fourdatasetswereusedinthis
+study: CSIC 2010, HTTPParams, Hybrid dataset (CSIC 2010
+andHTTPParams),andcustomdatasetofcompromisedweb
+server logs. Data preparation procedure has been done on
+these datasets (remove missing values, duplications, and
+outliers) and exported as CSV to be able to interact with
+machinelearningalgorithmsin Python(Scikit-learnpackage).
+SecurityandCommunicationNetworks 9
+
+=== Page 10 ===
+CSIC 2010 contains 18 columns, custom compromised
+webserverlogscontain10columns,andHTTPParams2015
+contains 4 columns.
+All previous datasets after preprocessing and di-
+mension reduction procedures become with only 5 nu-
+meric columns, all columns that contain information
+about request were removed and replaced by ﬁnal fea-
+tures columns that describe request brieﬂy and
+eﬀectively. ,’_hereafter, the Hybrid dataset became very
+simple.
+3.1.3. Training. We used four algorithms to classify (Naive
+Bayes, Logistic Regression, Decision Tree, and SVM). Four
+datasets were fed to the classiﬁer using two methods: train
+test split (80%, 20%) and cross-validation (100 Folds), and
+results were very close.
+Mixing and shuﬄing rows of CSIC 2010 and
+HTTPParams 2015 as a new dataset (Hybrid dataset) gave a
+verycloseresultcomparedtotheresultsoftheclassiﬁerwith
+each of the datasets separately (see Table 5).
+Previous experiments negate the probability of over-
+ﬁtting and prove that the ﬁnal features of our proposed
+model are eﬀective.
+3.2. Results
+3.2.1.ResultsBasedonDatasets. Ourproposedmodelused
+Naive Bayes with cross-validation (100 Folds) and
+achieved an accuracy of 98.8% with the dataset created
+fromlogsofacompromisedrealwebserver,97.61%with
+HTTPParams dataset, 99.58% with CSIC dataset, and
+96.40% for Hybrid dataset (combination of CSIC 2010
+and HTTPParams 2015).
+Usageoffourdiﬀerentdatasetsnegatestheprobabilityof
+overﬁtting presence, to conﬁrm that, k-fold cross-validation
+used in training also [37].
+MostoftherelatedworksusedCSIC2010datasetwithor
+without the custom dataset, and we used it in the proposed
+model for the possibility of comparing the proposed model
+with previous models (see Figure 9 or Table 5).
+Implementation of the proposed model includes a
+function to export WAF records as a new dataset with the
+ability to correct records. Administrators can train the
+proposed model using this exported dataset to strengthen
+WAF in protecting its web applications.
+Mostfalsepositivecasesarenormalrequestsclassiﬁedas
+anomaly requests (not the opposite).
+3.2.2. Results Compared to Related Works. Our proposed
+model achieved high accuracy of 98.8% compared with
+relatedworks.,’_hefollowingtableshowstheresultsforCSIC
+2010, HTTPParams, and custom datasets created by the
+researchers (see Figure 10 or Table 6).
+3.3. Comparison
+3.3.1. Limitations of Previous Works. Researchers have
+providedmanymodelsfordetectingwebattacks,anddespite
+their various features, there are some common weaknesses
+amongtheseresearches,whichcanbesummarizedasfollows:
+(1) Extracted features are not able to be general features
+and most of these features ﬁt only web applications,
+which it extracts from it.
+(2) Using old datasets such as CSIC and evaluating the
+model depends on the results of training it. In ad-
+dition, all modern datasets used are not available on
+the Internet.
+Table3: Subfeatures of attack weight feature.
+Subfeature Description
+URL weight Sum of weights of discovered manipulation in URL
+Number of attack words in inputs Sum of weights of discovered attack words in inputs
+Manipulate payload weight Sum of weights of discovered manipulation in payloads
+Alphanumeric character to special
+character ratio ,’_heratioofthenumberofalphanumericcharacterstothenumberofnonalphanumericcharacters
+Files weight Sum of weights of the malicious ﬁles (malicious ﬁle weight is the weight of extension+sum ofweights of scan using three antiviruses)
+Table4: Sample of the dataset used to train the model, we have four features for every single request and its label.
+payload_len Alpha non_alpha attack_feature Label
+0 0 0 0 0
+41 95.45454545 4.545454545 200 1
+241 100 0 0 0
+9 100 0 0 0
+24 94.73684211 5.263157895 2600 1
+54 77.77777778 22.22222222 90000 1
+75 100 0 0 0
+103 87.37864078 12.62135922 60000 1
+91 84.61538462 15.38461538 90000 1
+10 SecurityandCommunicationNetworks
+
+=== Page 11 ===
+99.59
+97.91
+96.4
+98.8
+94
+95
+96
+97
+98
+99
+100Accuracy
+Datasets
+CSIC 2010
+HTTPParams 2015
+Hybrid (CSIC + HTTPParams)
+Custom IIS Logs
+Figure 9: Classiﬁcation accuracy of our proposed model for various datasets.
+98.8
+88.32
+97.496.74
+82
+84
+86
+88
+90
+92
+94
+96
+98
+100
+Accuracy
+Web Application Firewalls
+Tekerek A. and Bay O.F. (2019)
+Ghafarian A. (2017)
+Sharma S., Zavarsky P. and Butakov S. (2020)
+proposed model
+Figure 10: Classiﬁcation accuracy of our proposed model compared with related works.
+Table5: Classiﬁcation accuracy of our proposed model for various datasets using Naive Bayes.
+CSIC 2010 HTTPParams 2015 Hybrid dataset Compromised webserver dataset
+Number of normal requests 28,800 19,305 48,105 60250
+Number of anomaly 11,213 11,764 22,977 5210
+Classiﬁcation accuracy (80% training, 20% testing) 99.59% 97.91% 96.40% 98.80%
+Classiﬁcation accuracy (100-fold cross-validation) 99.71% 98.02% 96.66% 98.97%
+False positive rate 0.54% 1.20% 3.35% 0.84%
+Table6: Classiﬁcation accuracy of our proposed model compared with related works.
+Our proposed model Tekerek and Bay [25] Sharma et al. [26] Ghafarian [31]
+CSIC 2010 99.59% 96.74% 94.7% 88.32%
+ECML-PKDD 2007 Not tested 94.53% Not tested Not tested
+HTTPParams 2015 97.61% Not tested Not tested Not tested
+Custom dataset 98.8% 98.52% Not tested Not tested
+SecurityandCommunicationNetworks 11
+
+=== Page 12 ===
+(3) Some papers of related works contain some errors
+and inaccurate information, such as the study by
+Sharma S., Zavarsky P., and Butakov S. (2020) [26].
+,’_hey used features that cannot be extracted from
+CSIC 2010 (e.g., _cookie_len feature).
+(4) Most of the related works process payload only
+without taking headers and ﬁles into consideration.
+(5) Hybrid models are too rare (in related works only
+TekerekA.andO.F.Bay(2019)paperisahybridmodel).
+(6) Most of the related works detect common web at-
+tackssuchasXSSandSQLI,nosuggestedmodelcan
+detect attacks that use normal requests to be per-
+formed, such as DOS attacks.
+3.3.2. Advantages of the Proposed Model. Disadvantages of
+related works and weakness points were taken into con-
+sideration while designing and preparing our proposal
+model.Featuresextractedinthismodelaregeneralandcan
+workwithanywebapplication.Inaddition,weusedvarious
+datasets(standarddatasetssuchasCSIC2010tocompareour
+model with related works, modern datasets such as
+HTTPParams2015,andHybriddataset,inaddition,wealso
+used a custom dataset of a real compromised web server).
+Final features describe all parts of the HTTP request in-
+cluding headers and ﬁles. Finally, a high-accuracy rate was
+achieved (98.8% for custom dataset and 99.6% for standard
+dataset).
+4.Conclusion
+Inthisarticle,weproposedawebapplicationﬁrewallmodel
+that used machine learning techniques and features engi-
+neering to detect common web attacks. We took into
+considerationmajorlimitationsinpreviousworks(unuseof
+request headers, using one dataset only, absence of general
+features). Features engineering and previous experience in
+the software security domain were used to extract general
+and comprehensive features that describe and summarize
+requests and make the classiﬁcation problem much easier.
+We extract the ﬁnal four features from HTTP requests using
+basicfeatures. Basicfeatures: Allbasicinformationextracted
+directly from the request, we have ﬁve basic features: HTTP
+protocol (HTTP method), absolute URL (URL), payload,
+headers, and ﬁles. Final features: all features that are cal-
+culated and extracted based on basic features, we have four
+extracted features: input length, alphanumeric character
+ratio, special character ratio, and attack weight. Values of
+extracted features for the normal request are usually short
+request length, big allowed character ratio, small special
+character ratio, and zero risk weight or close to zero. Values
+of extracted features for anomaly requests are usually large
+request length, small allowed character percentage, large
+special character percentage, and very large numeric risk
+weight.Toincreasethesecuritylevel,wesuggesttrainingour
+proposed model on web server records of web applications
+that will be protected by WAF. Any classiﬁcation algorithm
+can be used, but we used algorithms that work more eﬃ-
+ciently on binary classiﬁcation problems, such as Logistic
+Regression, Decision Tree, and Naive Bayes, we focus on
+Naive Bayes. Our proposed model achieved a high classiﬁ-
+cation accuracy of 99.6% with standard datasets used in
+research studies in this ﬁeld (CSIC 2010), and 98.8% with
+datasets of real compromised web server dataset.
+5.Future Works
+Future works domains are wide, it can be summarized as
+follows (see next three subsections for more information):
+Researchers in the information security domain can
+develop proposed WAF by feeding it with more datasets
+(generated datasetfromourproposedWAF orbycreatinga
+custom dataset from web servers logs) or by add or modify
+currentfeatures,alsotheycandevelopseparatecomponents
+andmigratethemwithourproposedWAF(signature-based
+model to check request before pass it to the classiﬁer, DOS
+attack detector, and use natural language process to make a
+modeltoidentifyattackwordsinsteadofusingatableinthe
+database to store these attack words).
+For software engineers, developers and information
+security engineers use our proposed model to evaluate their
+applications and improve their skills by learning how to
+write a secure source code.
+Sponsors and businesspersons can invest money to
+develop the proposed model and become a commercial
+product.
+5.1.FutureWorksforResearchersintheInformationSecurity
+Domain
+(1) Export web server logs as dataset after deploying
+WAF for a speciﬁed period in the real environment,
+and use neural networks instead of algorithms used
+in this article.
+(2) Use natural language processing to generate rules to
+detectcommonattackwordsandmaliciouspayloads
+instead of using hardcoded arrays. Common attack
+words and malicious payloads are implemented as
+arrays within the proposed model.
+(3) Use reinforcement learning to obtain feedback and
+use it during decision-making (this proposal can be
+implemented after the proposed model becomes
+matureandready,soreinforcementlearningisnota
+good option in real-time applications).
+(4) Use various and new datasets (dimensionality re-
+duction required depends on features numbers
+[38, 39]).
+(5) Extendtheproposedmodeltodetectattacksthatuse
+normalrequestssuchasDOSattacksandbruteforce
+attacks. ,’_he proposed model cannot detect these
+types of attacks because it can detect attacks by
+detecting anomaly requests.
+(6) Usefeaturesengineeringtomodifyoraddfeaturesto
+the model. Features are the most important com-
+ponent in the model depending on the researcher’s
+experience in the ﬁeld of information security.
+12 SecurityandCommunicationNetworks
+
+=== Page 13 ===
+(7) Extend the proposed model by adding components
+that work with signature-based detection. ,’_hepro-
+posed model works by using one technique, which is
+detection depending on the content through features
+extracted from the incoming request. ,’_he proposed
+system can be combined with diﬀerent detection
+techniques and provide a hybrid model (see Tekerek
+A. and Bay O.F (2019) [25] study in related works).
+(8) Use ensemble classiﬁers instead of the proposed
+classiﬁer (Naive Bayes) to increase the eﬃciency of
+request classiﬁcation [40] (it depends on balancing
+between security level sensitivity and perform-
+ance—usuallyusing ensembleclassiﬁersincrease the
+eﬃciency of classiﬁcation at the expense of speed
+performance especially that WAF is a real-time
+service).
+5.2. Future Works for Software Engineers, Developers, and
+Information Security Engineers
+(1) Training model by supplying logs of their web ap-
+plications as a dataset. ,’_his will increase the security
+level of WAF to protect their web application and
+WAF will get a great experience.
+(2) Implementing the proposed model to support
+Windows operating systems (current implementa-
+tion supports Linux distributions only).
+(3) Installing vulnerable web applications such as
+DVWA in the web server and try to bypass WAF;
+this will increase the experience of information se-
+curity engineers to learn new methods of bypassing
+WAF and help researchers to modify features to
+prevent these bypasses.
+5.3. Future Works for Sponsors and Businesspersons.
+Investing money to develop the proposed model to be a
+product in the security and IT market.
+Data Availability
+CSIC 2010, HTTPParams 2015, and a hybrid dataset with
+Python code to train these datasets are available in the
+following repository: https://github.com/aref2008/waf. We
+recommend reading README.md to read all instructions
+about usage. We did not publish a custom dataset (real
+compromised web server logs) due to privacy.
+Conflicts of Interest
+,’_he authors declare no conﬂicts of interest.
+Acknowledgments
+,’_he authors thank everyone who provided any kind of
+support to complete this work, especially to the Hindawi
+Foundation, Mrs. Nadia Ali, the reviewers, and the editors
+Prof. Megias David, Prof. Roberto Di Pietro, and Prof.
+Jhaveri Rutvij for their great eﬀorts.
+References
+[1] M. Chora´s and R. Kozik, “Machine learning techniques ap-
+plied to detect cyber attacks on web applications,” Logic
+Journal of IGPL, vol. 23, no. 1, pp. 45–56, 2015.
+[2] D. Wichers and J. Williams, “Owasp Top Ten,”5T_he open web
+application security project, vol. 3, 2017.
+[3] Z. J. Huang, O. Ai, and X. U. Hong-xian, “Network Security
+and Firewall Technology,” Journal of Naval University of
+Engineering, vol. 1, 2002.
+[4] A.H.Yaacob,M.Nazrul,N.Ahmad,andM.Roslee,“Moving
+towards positive security model for web application ﬁrewall,”
+International Journal of Computer and Information Engi-
+neering, vol. 6, no. 12, pp. 1763–1768, 2012.
+[5] P.P.MukkamalaandS.Rajendran,“Asurveyonthediﬀerent
+ﬁrewall technologies,” International Journal of Engineering
+Applied Sciences and Technology, vol. 5, no. 1, pp. 363–365,
+2020.
+[6] W. Wang and K. Siau, “Artiﬁcial intelligence, machine
+learning, automation, robotics, future of work and future of
+humanity,” Journal of Database Management, vol. 30,
+pp. 61–79, 2019.
+[7] M.-H. Huang and R. T. Rust, “Artiﬁcial intelligence in ser-
+vice,” Journal of Service Research, vol. 21, no. 2, pp. 155–172,
+2018.
+[8] J.H.Li,“Cybersecuritymeetsartiﬁcialintelligence:asurvey,”
+Frontiers of Information Technology & Electronic Engineering,
+vol. 19, no. 12, pp. 1462–1474, 2018.
+[9] A. K. Dalai and S. Kumar Jena, “Neutralizing SQL Injection
+Attack Using Server Side Code Modiﬁcation in Web appli-
+cations,” Security and Communication Networks, vol. 2017,
+Article ID 3825373, 2017.
+[10] D. Mitropoulos, V. Karakoidas, P. Louridas, and D. Spinellis,
+“Countering Code Injection Attacks: A Uniﬁed Approach,”
+Information Management&Computer Security,vol.19,no.3,
+2011.
+[11] M. M. Hassan, S. S. Nipa, M. Akter et al., “Broken authen-
+ticationandsessionmanagementvulnerability:acasestudyof
+web application,” International Journal of Simulation: Sys-
+tems, Science & Technology, vol. 19, no. 2, pp. 1–6, 2018.
+[12] J. Doshi and T. Bhushan,“Sensitive data exposure prevention
+using dynamic database security policy,”International Jour-
+nal of Computer Application, vol. 106, no. 15, pp. 18600–
+19869, 2014.
+[13] A. A. Osincev and O. R. Laponina, “Vulnerability testing in
+web applications external entities XML,”International Jour-
+nalofOpenInformationTechnologies,vol.7,no.10,pp.71–79,
+2019.
+[14] D. H. Lee, J. W. Lee, and J. G. Kim, “Veriﬁcation methods of
+OWASP TOP 10 security vulnerability under multi-tenancy
+web site’s environments,” Convergence security journal,
+vol. 16, no. 4, pp. 43–51, 2016.
+[15] P. Jayabalan, R. Ibrahim, and A. A. Manaf, “Understanding
+cybercrimeinMalaysia:anoverview,” SainsHumanika,vol.2,
+no. 2, 2014.
+[16] B. K. Ayeni, J. B. Sahalu, and K. R. Adeyanju, “Detecting
+cross-site scripting in web applications using fuzzy inference
+system,”JournalofComputerNetworksandCommunications,
+vol. 2018, pp. 1–10, 2018.
+[17] V. Pedreira, D. Barros, and P. Pinto, “A review of attacks,
+vulnerabilities, and defenses in industry 4.0 with new chal-
+lenges on data sovereignty ahead,”Sensors, vol. 21, p. 5189,
+2021.
+SecurityandCommunicationNetworks 13
+
+=== Page 14 ===
+[18] N. Mendes, J. Duraes, and H. Madeira, “Benchmarking the
+security of web serving systems based on known vulnera-
+bilities,” in Proceedings of the 2011 5th Latin-American
+Symposium on Dependable Computing, pp. 55–64, IEEE, Sao
+Jose dos Campos, Brazil, April 2011.
+[19] M. Malviya, A. Jain, and N. Gupta, “Improving security by
+predicting anomaly user through web mining: a review,”
+International Journal of Advances in Engineering & Tech-
+nology, vol. 1, no. 2, p. 28, 2011.
+[20] C. T. Gim´enez, A. P. Villegas, and G. ´A. Marañ´on, “Http
+dataset CSIC 2010,” 2010, https://www.isi.csic.es/dataset/.
+[21] F. Eisterlehner, A. Hotho, and R. J¨aschke, “ECML/PKDD
+dataset,” 2007, https://gitlab.ﬁng.edu.uy/gsi/web-application-
+attacks-datasets/-/tree/master/ecml_pkdd.
+[22] G.P.UrdanetaandG.V.S.Maarten,“Wikipediaaccesstraces
+Datasets,” 2008, http://www.wikibench.eu/?page_id�60.
+[23] FuzzDB, 2007, https://code.google.com/p/fuzzdb/.
+[24] M. Zhang, S. Lu, and B. Xu, “An anomaly detection method
+based on multi-models to detect web attacks,” inProceedings
+of the 2017 10th International Symposium on Computational
+Intelligence and Design (ISCID), pp. 404–409, IEEE, Hang-
+zhou, China, December 2017.
+[25] A. Tekerek and O. F. Bay, “Design and implementation of an
+artiﬁcial intelligence-based web application ﬁrewall model,”
+Neural Network World, vol. 29, no. 4, pp. 189–206, 2019.
+[26] S. Sharma, P. Zavarsky, and S. Butakov, “Machine learning
+based intrusion detection system for web-based attacks,” in
+Proceedings of the 2020 IEEE 6th Intl Conference on Big Data
+Security on Cloud (BigDataSecurity), IEEE Intl Conference on
+High Performance and Smart Computing,(HPSC) and IEEE
+Intl Conference on Intelligent Data and Security (IDS),
+pp. 227–230, IEEE, Baltimore, MD, USA, May 2020.
+[27] A.M.Vartouni,S.S.Kashi,andM.Teshnehlab,“Ananomaly
+detection method to detect web attacks using stacked auto-
+encoder,”in Proceedingsofthe20186thIranianJointCongress
+on Fuzzy and Intelligent Systems (CFIS), pp. 131–134, IEEE,
+Kerman, Iran, March 2018.
+[28] “HttpParams dataset,” 2015, https://github.com/Morzeux/
+HttpParamsDataset.
+[29] X. D. Hoang, “Detecting common web attacks based on
+machine learning using web log,” inProceedings of the In-
+ternational Conference on Engineering Research and Appli-
+cations, pp. 311–318, Springer, ,’_hai Nguyen, December 2020.
+[30] Q. Niu and X. Li, “A high-performance web attack detection
+method based on CNN-GRU model,” inProceedings of the
+2020IEEE4thInformationTechnology,Networking,Electronic
+and Automation Control Conference (ITNEC), pp. 804–808,
+IEEE, Chongqing, China, June 2020.
+[31] A.Ghafarian,“Ahybridmethodfordetectionandprevention
+of SQL injection attacks,” inProceedings of the 2017 Com-
+putingConference,pp.833–838,IEEE,London,UK,July2017.
+[32] W. G. J. Halfond and A. Orso, “Preventing SQL injection
+attacks using AMNESIA,” inProceedings of the 28th Inter-
+national Conference on Software Engineering, pp. 795–798,
+Shanghai, China, May 2006.
+[33] P. Bisht, P. Madhusudan, and V. N. Venkatakrishnan,
+“Candid,” ACM Transactions on Information and System
+Security, vol. 13, pp. 1–39, 2010.
+[34] R. Kumari and S. K. Srivastava, “Machine learning: a review
+on binary classiﬁcation,”International Journal of Computer
+Application, vol. 160, p. 7, 2017.
+[35] M. Proxy: https://docs.mitmproxy.org/stable/.
+[36] S. Suroto, “A review of defense against slow HTTP attack,”
+JOIV International Journal on Informatics Visualization,
+vol. 1, no. 4, pp. 127–134, 2017.
+[37] S. B. Kotsiantis, I. Zaharakis, and P. Pintelas, “Supervised
+machine learning: a review of classiﬁcation techniques,”
+Emerging artiﬁcial intelligence applications in computer en-
+gineering, vol. 160, no. 1, pp. 3–24, 2007.
+[38] R. Abdulhammed, H. Musafer, A. Alessa, M. Faezipour, and
+A. Abuzneid, “Features dimensionality reduction approaches
+for machine learning based network intrusion detection,”
+Electronics, vol. 8, no. 3, p. 322, 2019.
+[39] G. T. Reddy, M. P. K. Reddy, K. Lakshmanna et al., “Analysis
+of dimensionality reduction techniques on big data,”IEEE
+Access, vol. 8, pp. 54776–54788, 2020.
+[40] G. T. Reddy, S. Bhattacharya, S. S. Ramakrishnan et al., “An
+ensemble based machine learning model for diabetic reti-
+nopathy classiﬁcation,” in Proceedings of the 2020 Interna-
+tional Conference on Emerging Trends in Information
+Technology and Engineering (Ic-ETITE), pp. 1–6, IEEE, Vel-
+lore, India, Feb 2020.
+14 SecurityandCommunicationNetworks
+

@@ -1,20 +1,57 @@
+# Virtual Environments
 venv/
 .venv/
+env/
+ENV/
+
+# Python Bytecode & Cache
 __pycache__/
-*.pyc
-
-.vscode/
-.streamlit/
-
-*.db
-*.log
-
+*.py[cod]
+*$py.class
+.pytest_cache/
 .ipynb_checkpoints/
 
+# Secrets & Environment Variables
+.env
+.env.*
+*.key
+*.pem
+*.pfx
+
+# Local SQLite & Runtime Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Runtime Logs
+*.log
+logs/
+
+# IDE & Editor Configurations
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.streamlit/
+
+# Build & Packaging
 build/
 dist/
+*.egg-info/
 
+# Operating System Files
 Thumbs.db
+ehthumbs.db
 .DS_Store
+[Dd]esktop.ini
 
+# Archives & Temporary Files
 *.zip
+*.tar.gz
+*.rar
+*.7z
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo

@@ -103,7 +103,7 @@ def _is_rate_limited(client_ip: str) -> tuple[bool, int]:
 # ---------------------------------------------------------------------------
 app = FastAPI()
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory=str(_BASE_DIR / "templates"))
 
 # Initialise the rate-limit log table at startup
 _init_rate_limit_table()
@@ -199,8 +199,9 @@ async def threatshield_firewall(request: Request, call_next):
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
 
+    template_name = "home.html" if (_BASE_DIR / "templates" / "home.html").exists() else "index.html"
     return templates.TemplateResponse(
-        "index.html",
+        template_name,
         {"request": request}
     )
 

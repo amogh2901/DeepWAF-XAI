@@ -35,6 +35,11 @@ try:
 except ModuleNotFoundError:
     from src.adversarial_sandbox import generate_adversarial_mutations
 from logger import log_attack
+try:
+    import incident_manager
+except ModuleNotFoundError:
+    from src import incident_manager
+import json
 from admin_config import ADMIN_PASSKEY
 try:
     from auth import (
@@ -42,7 +47,7 @@ try:
         provision_manual_user, request_account_reset, get_pending_iam_requests,
         admin_resolve_request, get_all_users, USERS_DB_PATH,
         get_soc_key, update_soc_key, get_user_passkey, update_user_passkey,
-        count_users_by_role
+        count_users_by_role, SUPERADMIN_USERNAME
     )
 except ModuleNotFoundError:
     from src.auth import (
@@ -50,7 +55,7 @@ except ModuleNotFoundError:
         provision_manual_user, request_account_reset, get_pending_iam_requests,
         admin_resolve_request, get_all_users, USERS_DB_PATH,
         get_soc_key, update_soc_key, get_user_passkey, update_user_passkey,
-        count_users_by_role
+        count_users_by_role, SUPERADMIN_USERNAME
     )
 
 # Load model info path
@@ -783,8 +788,14 @@ if not st.session_state.get("authenticated", False):
             reg_pwd     = st.text_input("New Password", type="password", key="auth_reg_pwd", placeholder="At least 6 characters")
             reg_confirm = st.text_input("Confirm Password", type="password", key="auth_reg_confirm", placeholder="••••••••")
 
+            is_reserved_admin = bool(reg_user.strip() and reg_user.strip().lower() == SUPERADMIN_USERNAME.lower())
+            if is_reserved_admin:
+                st.error("❌ admin is a reserved administrator username and cannot be registered.")
+
             if st.button("🛡️ Create Account", type="primary", use_container_width=True, key="btn_register"):
-                if not reg_user.strip() or not reg_pwd or not reg_confirm:
+                if is_reserved_admin:
+                    st.stop()
+                elif not reg_user.strip() or not reg_pwd or not reg_confirm:
                     st.warning("Please fill in all registration fields.")
                 elif reg_pwd != reg_confirm:
                     st.error("Passwords do not match.")
@@ -802,8 +813,13 @@ if not st.session_state.get("authenticated", False):
             st.markdown("#### IT Helpdesk Support Ticket")
             st.caption("Submit an account unlock or password reset request to the SOC Administrator.")
             reset_uname = st.text_input("Account Username", key="req_reset_uname", placeholder="Enter your username")
+            is_admin_reset = bool(reset_uname.strip() and reset_uname.strip().lower() == SUPERADMIN_USERNAME.lower())
+            if is_admin_reset:
+                st.error("❌ The SuperAdmin account cannot be unlocked or reset through the standard operator request system.")
             if st.button("📨 Submit Unlock Request", use_container_width=True, key="btn_submit_reset"):
-                if not reset_uname.strip():
+                if is_admin_reset:
+                    st.stop()
+                elif not reset_uname.strip():
                     st.warning("Please enter your username.")
                 else:
                     ok, r_msg = request_account_reset(reset_uname.strip())
@@ -981,13 +997,14 @@ def render_html_heatmap(saliency_scores):
     return html
 
 def create_attack_logs_table():
-    """Create logs table if it doesn't exist."""
+    """Create logs table if it doesn't exist and ensure schema is up-to-date."""
     try:
         with sqlite3.connect(DB_PATH) as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS attack_logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     timestamp TEXT,
+                    username TEXT DEFAULT 'SYSTEM',
                     request TEXT,
                     attack_type TEXT,
                     confidence REAL,
@@ -996,6 +1013,14 @@ def create_attack_logs_table():
                     prediction_time_ms REAL
                 )
             """)
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(attack_logs)")
+            existing_columns = [info[1] for info in cursor.fetchall()]
+            if "username" not in existing_columns:
+                cursor.execute("ALTER TABLE attack_logs ADD COLUMN username TEXT DEFAULT 'SYSTEM'")
+                conn.commit()
+            cursor.execute("UPDATE attack_logs SET username = 'SYSTEM' WHERE username IS NULL OR username = ''")
+            conn.commit()
     except Exception as e:
         st.error(f"Database setup error: {e}")
 
@@ -1031,6 +1056,31 @@ def load_attack_logs() -> pd.DataFrame:
         st.error(f"Error loading logs: {e}")
         return pd.DataFrame()
 
+def normalize_threat_score_series(series: pd.Series) -> pd.Series:
+    """
+    Normalizes threat scores to the canonical [0.0, 1.0] range.
+    Safely scales legacy unnormalized raw scores (> 1.0, e.g. 0-100 or 0-10 scale)
+    from historical test records so that dashboard statistics accurately reflect
+    the normalized Threat Index without altering database records.
+    """
+    if series is None or getattr(series, 'empty', True):
+        return series
+
+    def _norm(val):
+        if pd.isna(val):
+            return val
+        try:
+            v = float(val)
+            if v > 10.0:
+                v = v / 100.0
+            elif v > 1.0:
+                v = v / 10.0
+            return max(0.0, min(1.0, v))
+        except (ValueError, TypeError):
+            return 0.0
+
+    return series.apply(_norm)
+
 def get_live_stats():
     df = load_attack_logs()
 
@@ -1050,11 +1100,12 @@ def get_live_stats():
     malicious = len(df[~df["attack_type"].isin(normal)])
     critical = len(df[df["severity"] == "CRITICAL"])
 
-    avg_score = (
-        df["threat_score"].mean()
-        if "threat_score" in df.columns
-        else 0
-    )
+    if "threat_score" in df.columns and not df["threat_score"].empty and pd.notnull(df["threat_score"]).any():
+        avg_score = normalize_threat_score_series(df["threat_score"]).mean()
+        if pd.isna(avg_score):
+            avg_score = 0
+    else:
+        avg_score = 0
 
     return {
         "total": total,
@@ -1084,6 +1135,8 @@ def get_filtered_logs(df, attack_type, severity, date_range, request_search):
 create_attack_logs_table()
 # Initialise quarantine tables (idempotent)
 quarantine.init_pending_table()
+# Initialise incident tables (idempotent)
+incident_manager.init_incident_tables()
 
 # ---------------- Attack Detection Page ----------------
 if page == "🛡 Attack Detection":
@@ -1309,6 +1362,8 @@ if page == "🛡 Attack Detection":
                 # Calculate threat score once
                 threat_score = calculate_threat_score(info["severity"], confidence)
 
+                active_user = st.session_state.get("username") or current_operator or "SYSTEM"
+
                 # Log attack
                 log_attack(
                     request=request_input,
@@ -1316,8 +1371,29 @@ if page == "🛡 Attack Detection":
                     confidence=confidence,
                     severity=info["severity"],
                     threat_score=threat_score,
-                    prediction_time_ms=prediction_time_ms
+                    prediction_time_ms=prediction_time_ms,
+                    username=active_user
                 )
+
+                # Record incident in PENDING status if malicious (Safe traffic is excluded)
+                current_incident_id = None
+                if attack_type not in ["Normal", "LEGAL"]:
+                    try:
+                        xai_summary = "; ".join(explanation_result.get("explanation", [])) or explanation_result.get("summary", "")
+                        current_incident_id = incident_manager.record_attack_incident(
+                            raw_payload=request_input,
+                            attack_type=attack_type,
+                            confidence=confidence,
+                            severity=info["severity"],
+                            threat_score=threat_score,
+                            prediction_time_ms=prediction_time_ms,
+                            current_status="BLOCKED",
+                            xai_reason=xai_summary,
+                            recommended_action=info.get("recommendation", "") or "",
+                            submitted_by=active_user
+                        )
+                    except Exception as inc_err:
+                        print(f"[DeepWAF-XAI] Incident recording notice: {inc_err}")
 
                 # Quarantine & Threat Intel gate: call response engine ONCE
                 response = response_action(
@@ -1352,7 +1428,8 @@ if page == "🛡 Attack Detection":
                     "info": info,
                     "threat_score": threat_score,
                     "response": response,
-                    "_quarantined": _quarantined
+                    "_quarantined": _quarantined,
+                    "incident_id": current_incident_id
                 }
 
     # ================================================================
@@ -1487,9 +1564,9 @@ if page == "🛡 Attack Detection":
                         <div class="kpi-sub">{info.get("severity", "MEDIUM")} Risk Level</div>
                     </div>
                     <div class="kpi-card kpi-cyan">
-                        <div class="kpi-header"><span>⏱</span> Inference Latency</div>
+                        <div class="kpi-header"><span>⏱</span> Analysis Latency</div>
                         <div class="kpi-value" style="color: #38BDF8;">{prediction_time_ms:.2f} <span style="font-size:13px; color:#64748B;">ms</span></div>
-                        <div class="kpi-sub">Neural Compute Time</div>
+                        <div class="kpi-sub">XAI + UI Processing Time</div>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -1737,11 +1814,145 @@ if page == "🛡 Attack Detection":
             st.write("**Log Status:**",         _log)
             st.write("**Recommended Action:**", _rec_action)
 
+            # 🚨 Cyber Security Incident Reporting Workflow
+            if attack_type not in ["Normal", "LEGAL"]:
+                _inc_id = data.get("incident_id")
+                if not _inc_id:
+                    try:
+                        active_user = st.session_state.get("username") or current_operator or "SYSTEM"
+                        _inc_id = incident_manager.record_attack_incident(
+                            raw_payload=active_payload,
+                            attack_type=attack_type,
+                            confidence=confidence,
+                            severity=info["severity"],
+                            threat_score=threat_score,
+                            prediction_time_ms=prediction_time_ms,
+                            current_status=_status,
+                            xai_reason="; ".join(explanation_result.get("explanation", [])) or explanation_result.get("summary", ""),
+                            recommended_action=_rec_action,
+                            submitted_by=active_user
+                        )
+                        data["incident_id"] = _inc_id
+                    except Exception as _e:
+                        print(f"[DeepWAF-XAI] Incident init error: {_e}")
+
+                if _inc_id:
+                    _inc_data = incident_manager.get_incident(_inc_id) or {}
+                    _inc_status = str(_inc_data.get("report_status", "PENDING")).strip().upper()
+                    _badge_text, _badge_color = incident_manager.STATUS_BADGES.get(_inc_status, (_inc_status, "#f59e0b"))
+
+                    # Dynamic description reflecting current lifecycle stage
+                    if _inc_status == "REPORTED":
+                        _rep_by = _inc_data.get("reported_by") or "Administrator"
+                        _rep_at = _inc_data.get("reported_at") or "Recently"
+                        _status_desc = f"Incident reported to Cyber Security / CSIRT by <b>{_rep_by}</b> on {_rep_at}. Structured forensic report package archived for SOC tracking."
+                    elif _inc_status == "UNDER_REVIEW":
+                        _status_desc = "Incident is currently under active forensic investigation by the Cyber Security operations team."
+                    elif _inc_status == "RESOLVED":
+                        _status_desc = "Incident investigation has been completed and marked as resolved."
+                    elif _inc_status == "REPORT_FAILED":
+                        _status_desc = "Reporting dispatch encountered an issue. Administrator may retry or export report manually."
+                    else:  # PENDING
+                        _status_desc = "Harmful attack detected. Administrator may generate and prepare a structured forensic report package for Cyber Security / CSIRT review."
+
+                    st.markdown("---")
+                    st.markdown(f"""
+                    <div style="
+                        background: #111827;
+                        border: 1px solid #374151;
+                        border-left: 5px solid {_badge_color};
+                        border-radius: 12px;
+                        padding: 16px 20px;
+                        margin-top: 10px;
+                        margin-bottom: 12px;
+                    ">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 16px; font-weight: 700; color: #f8fafc;">🚨 Cyber Security Incident Review</span> &nbsp;
+                                <code style="color: #67e8f9; font-weight: 700;">{_inc_id}</code>
+                            </div>
+                            <span style="background: {_badge_color}22; color: {_badge_color}; border: 1px solid {_badge_color}; padding: 2px 10px; border-radius: 14px; font-size: 11px; font-weight: 700;">
+                                {_badge_text}
+                            </span>
+                        </div>
+                        <div style="font-size: 12.5px; color: #cbd5e1; margin-top: 6px;">
+                            {_status_desc}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    if current_role == "admin":
+                        _rcol1, _rcol2, _rcol3 = st.columns([1.5, 1, 1])
+                        with _rcol1:
+                            if _inc_status == "PENDING":
+                                if st.button("🚨 Report to Cyber Security", type="primary", use_container_width=True, key=f"btn_detect_report_{_inc_id}"):
+                                    ok, r_msg, _ = incident_manager.report_incident(
+                                        incident_id=_inc_id,
+                                        admin_username=current_operator,
+                                        admin_role=current_role,
+                                        method="SOC_FORENSIC_EXPORT",
+                                        notes="Reported immediately from Live Attack Detection console."
+                                    )
+                                    if ok:
+                                        st.success(f"✅ {r_msg}")
+                                        if "analysis_data" in st.session_state and st.session_state.analysis_data:
+                                            st.session_state.analysis_data["incident_id"] = _inc_id
+                                        time.sleep(0.3)
+                                        st.rerun()
+                                    else:
+                                        if "already reported" in r_msg.lower():
+                                            st.info(f"ℹ️ {r_msg}")
+                                        else:
+                                            st.error(f"❌ {r_msg}")
+                            elif _inc_status == "REPORTED":
+                                st.button("✅ Reported to Cyber Security", disabled=True, use_container_width=True, key=f"btn_detect_reported_{_inc_id}")
+                            elif _inc_status == "UNDER_REVIEW":
+                                st.button("🟣 Under CSIRT Review", disabled=True, use_container_width=True, key=f"btn_detect_review_{_inc_id}")
+                            elif _inc_status == "RESOLVED":
+                                st.button("🟢 Incident Resolved", disabled=True, use_container_width=True, key=f"btn_detect_resolved_{_inc_id}")
+                            else:
+                                if st.button("⚠️ Retry Reporting", type="primary", use_container_width=True, key=f"btn_detect_retry_{_inc_id}"):
+                                    ok, r_msg, _ = incident_manager.report_incident(
+                                        incident_id=_inc_id,
+                                        admin_username=current_operator,
+                                        admin_role=current_role,
+                                        method="SOC_FORENSIC_EXPORT",
+                                        notes="Retry reporting from Live Attack Detection console."
+                                    )
+                                    if ok:
+                                        st.success(f"✅ {r_msg}")
+                                        st.rerun()
+
+                        _rep_pkg = incident_manager.generate_incident_report(_inc_id)
+                        _json_str = json.dumps(_rep_pkg, indent=2) if _rep_pkg else "{}"
+                        _txt_str = incident_manager.generate_incident_markdown(_rep_pkg) if _rep_pkg else ""
+
+                        with _rcol2:
+                            st.download_button(
+                                "📥 Export JSON",
+                                data=_json_str,
+                                file_name=f"{_inc_id}_report.json",
+                                mime="application/json",
+                                use_container_width=True,
+                                key=f"dl_det_json_{_inc_id}"
+                            )
+                        with _rcol3:
+                            st.download_button(
+                                "📄 Export TXT",
+                                data=_txt_str,
+                                file_name=f"{_inc_id}_forensic.txt",
+                                mime="text/plain",
+                                use_container_width=True,
+                                key=f"dl_det_txt_{_inc_id}"
+                            )
+                    else:
+                        st.caption("🔒 *Incident reporting requires Administrator privileges.*")
+
             # Model Details — only meaningful when AI was actually used
             if not _from_threat_intel:
                 st.markdown(f"""
                 ### 📚 Model Details
-                - **Model:** Bi-Directional LSTM
+                - **Model:** Stacked Bi-Directional LSTM
                 - **Embedding:** {embedding_dim} Dimensions
                 - **Sequence Length:** {sequence_length}
                 - **Framework:** TensorFlow 2.x
@@ -1931,9 +2142,9 @@ elif page == "📊 Security Dashboard":
                 # Fetch fresh users directly from SQLite
                 _manage_users = get_all_users()
                 st.markdown("#### Modify User Role")
-                st.caption(f"Role Capacity Quotas: **TESTER** ({count_users_by_role('tester')}/3 active) • **USER** ({count_users_by_role('user') + count_users_by_role('operator')}/5 active)")
-                # Exclude SuperAdmin 'Amogh' from the editable selection list
-                editable_users = [u[1] for u in _manage_users if u[1].lower() != "amogh"]
+                st.caption(f"Role Capacity Quotas: **TESTER** ({count_users_by_role('tester')}/3 active) • **USER/Operator** (No hard-coded limit)")
+                # Exclude SuperAdmin from the editable selection list
+                editable_users = [u[1] for u in _manage_users if u[1].lower() != SUPERADMIN_USERNAME.lower()]
 
                 if editable_users:
                     col_sel_user, col_sel_role, col_sel_btn = st.columns([2, 1.5, 1])
@@ -1987,7 +2198,7 @@ elif page == "📊 Security Dashboard":
 
                         _formatted_ts = format_user_timestamp(_ucreated)
 
-                        if _uname.lower() == "amogh":
+                        if _uname.lower() == SUPERADMIN_USERNAME.lower():
                             _status_str = "PROTECTED"
                         elif _ulocked == 1:
                             _status_str = "LOCKED"
@@ -1999,7 +2210,7 @@ elif page == "📊 Security Dashboard":
                             _status_str = "ACTIVE"
 
                         _role_upper = str(_urole).strip().upper()
-                        if _role_upper == "ADMIN" or _uname.lower() == "amogh":
+                        if _role_upper == "ADMIN" or _uname.lower() == SUPERADMIN_USERNAME.lower():
                             _personal_key = "••••••••"
                         elif _role_upper == "TESTER":
                             _personal_key = _upasskey if (_upasskey and _upasskey != "temp_key_123") else "—"
@@ -2023,7 +2234,7 @@ elif page == "📊 Security Dashboard":
                 trigger_prov_refresh = False
 
                 st.markdown("#### Provision New Account")
-                st.caption(f"Create and assign roles to operator accounts directly from the SOC console. Active Quotas: **TESTER** ({count_users_by_role('tester')}/3) • **USER** ({count_users_by_role('user') + count_users_by_role('operator')}/5)")
+                st.caption(f"Create and assign roles to operator accounts directly from the SOC console. Active Quotas: **TESTER** ({count_users_by_role('tester')}/3) • **USER/Operator** (No hard-coded limit)")
 
                 p_col1, p_col2 = st.columns(2)
                 with p_col1:
@@ -2032,8 +2243,13 @@ elif page == "📊 Security Dashboard":
                 with p_col2:
                     prov_role = st.selectbox("Initial Role", ["user", "admin", "tester", "blocked"], key="prov_u_role")
                     st.markdown("<div style='margin-top:28px;'></div>", unsafe_allow_html=True)
+                    is_prov_admin = bool(prov_user.strip() and prov_user.strip().lower() == SUPERADMIN_USERNAME.lower())
+                    if is_prov_admin:
+                        st.error("❌ admin is a reserved administrator username and cannot be registered.")
                     if st.button("✨ Provision Account", type="primary", use_container_width=True, key="btn_prov_submit"):
-                        if not prov_user.strip() or not prov_pwd:
+                        if is_prov_admin:
+                            st.stop()
+                        elif not prov_user.strip() or not prov_pwd:
                             st.warning("Please provide both username and password.")
                         else:
                             try:
@@ -2199,7 +2415,7 @@ elif page == "📊 Security Dashboard":
         return series.mean() if not series.empty and pd.notnull(series).any() else 0
 
     confidence_avg = safe_mean(df_logs["confidence"]) * 100 if "confidence" in df_logs.columns else 0
-    threat_score_avg = safe_mean(df_logs["threat_score"]) if "threat_score" in df_logs.columns else 0
+    threat_score_avg = safe_mean(normalize_threat_score_series(df_logs["threat_score"])) if "threat_score" in df_logs.columns else 0
     prediction_time_avg = safe_mean(df_logs["prediction_time_ms"]) if "prediction_time_ms" in df_logs.columns else 0
     critical_count = len(df_logs[df_logs["severity"] == "CRITICAL"]) if "severity" in df_logs.columns else 0
     high_count = len(df_logs[df_logs["severity"] == "HIGH"]) if "severity" in df_logs.columns else 0
@@ -2402,7 +2618,9 @@ elif page == "📊 Security Dashboard":
     # Threat Score by Attack Type
     if "attack_type" in df_logs.columns and "threat_score" in df_logs.columns:
         try:
-            threat_by_type = df_logs.groupby('attack_type')['threat_score'].mean().reset_index()
+            _df_threat = df_logs.copy()
+            _df_threat["threat_score"] = normalize_threat_score_series(_df_threat["threat_score"])
+            threat_by_type = _df_threat.groupby('attack_type')['threat_score'].mean().reset_index()
             fig_threat = px.bar(
                 threat_by_type,
                 x='attack_type',
@@ -2420,23 +2638,30 @@ elif page == "📊 Security Dashboard":
         df_current_logs = load_attack_logs()
         filtered_current_df = get_filtered_logs(df_current_logs, attack_type, severity, dates, search_query)
 
-        display_cols = ['timestamp', 'request', 'attack_type', 'confidence', 'severity', 'threat_score', 'prediction_time_ms']
+        display_cols = ['timestamp', 'username', 'request', 'attack_type', 'confidence', 'severity', 'threat_score', 'prediction_time_ms']
         for col in display_cols:
             if col not in filtered_current_df.columns:
-                filtered_current_df[col] = ''
+                filtered_current_df[col] = 'SYSTEM' if col == 'username' else ''
+            elif col == 'username':
+                filtered_current_df[col] = filtered_current_df[col].fillna('SYSTEM').replace('', 'SYSTEM')
 
         st.subheader("Live Attack Logs")
         st.caption("Real-time telemetry stream (Auto-refreshes every 5s)")
 
         if not filtered_current_df.empty:
-            st.dataframe(filtered_current_df[display_cols].sort_values(by='timestamp', ascending=False), use_container_width=True)
-            csv_data = filtered_current_df.to_csv(index=False).encode("utf-8")
+            df_display = filtered_current_df[display_cols].sort_values(by='timestamp', ascending=False)
+            st.dataframe(df_display, use_container_width=True)
+            csv_data = df_display.to_csv(index=False).encode("utf-8")
             st.download_button("Download Attack Logs as CSV", data=csv_data, file_name="attack_logs.csv", mime="text/csv", key="btn_dl_logs_csv")
         else:
             st.info("No matching attack logs found.")
 
     _ = st.session_state.get('iam_refresh_tick', 0)
     render_live_attack_logs(attack_type_filter, severity_filter, date_range, request_search)
+
+    # ---------------- Cyber Security Incident Reporting & Tracking ----------------
+    st.markdown("---")
+    incident_manager.render_incident_reporting_ui(current_role, current_operator)
 
     # Attack Map (simulated)
     countries = [
@@ -2449,15 +2674,59 @@ elif page == "📊 Security Dashboard":
         ("UK", 55.3781, -3.4360),
         ("Canada", 56.1304, -106.3468)
     ]
+    # ── Canonical 5-class geo map normalization ──
+    _GEO_LABEL_MAP = {
+        # SQL Injection
+        "SQL": "SQL Injection",
+        "sql": "SQL Injection",
+        "sql_injection": "SQL Injection",
+        "SQLi": "SQL Injection",
+        "SQL Injection": "SQL Injection",
+
+        # XSS
+        "XSS": "XSS",
+        "xss": "XSS",
+        "Cross Site Scripting": "XSS",
+        "cross_site_scripting": "XSS",
+
+        # Phishing URL
+        "phishing_link": "Phishing URL",
+        "phishing": "Phishing URL",
+        "Phishing URL": "Phishing URL",
+
+        # Path Traversal
+        "path_traversal": "Path Traversal",
+        "Path Traversal": "Path Traversal",
+
+        # Normal / Legal
+        "normal": "Normal",
+        "Normal": "Normal",
+        "legal": "Normal",
+        "LEGAL": "Normal",
+    }
+    _CANONICAL_CLASSES = {
+        "Normal",
+        "SQL Injection",
+        "XSS",
+        "Path Traversal",
+        "Phishing URL",
+    }
+
     attack_map_data = []
     for _, row in filtered_df.iterrows():
-        if row["attack_type"] not in ["Normal", "LEGAL"]:
+        raw_label = str(row.get("attack_type", "")).strip()
+        normalized_label = _GEO_LABEL_MAP.get(raw_label)
+        if not normalized_label:
+            normalized_label = _GEO_LABEL_MAP.get(raw_label.lower())
+
+        # Plot only canonical 5 classes (internal states like 'Suspicious' are not plotted as a 6th category)
+        if normalized_label and normalized_label in _CANONICAL_CLASSES:
             country = random.choice(countries)
             attack_map_data.append({
                 "country": country[0],
                 "lat": country[1],
                 "lon": country[2],
-                "attack": row["attack_type"]
+                "attack": normalized_label
             })
     if attack_map_data:
         df_map = pd.DataFrame(attack_map_data)
@@ -2468,7 +2737,10 @@ elif page == "📊 Security Dashboard":
                 lon="lon",
                 color="attack",
                 hover_name="country",
-                projection="natural earth"
+                projection="natural earth",
+                category_orders={
+                    "attack": ["Normal", "SQL Injection", "XSS", "Path Traversal", "Phishing URL"]
+                }
             )
             fig_map.update_traces(marker=dict(size=14, opacity=0.9))
             st.plotly_chart(fig_map)

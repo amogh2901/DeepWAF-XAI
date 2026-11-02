@@ -18,7 +18,8 @@ def log_attack(
     confidence=0.0,
     severity="LOW",
     threat_score=0.0,
-    prediction_time_ms=0.0
+    prediction_time_ms=0.0,
+    username="SYSTEM"
 ):
     """
     Logs attack details into the SQLite database 'database/logs.db'.
@@ -39,6 +40,7 @@ def log_attack(
                 CREATE TABLE IF NOT EXISTS attack_logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     timestamp TEXT,
+                    username TEXT DEFAULT 'SYSTEM',
                     request TEXT,
                     attack_type TEXT
                 )
@@ -53,7 +55,8 @@ def log_attack(
                 "confidence": "REAL",
                 "severity": "TEXT",
                 "threat_score": "REAL",
-                "prediction_time_ms": "REAL"
+                "prediction_time_ms": "REAL",
+                "username": "TEXT DEFAULT 'SYSTEM'"
             }
 
             # Add missing optional columns
@@ -65,18 +68,27 @@ def log_attack(
                     except sqlite3.Error as e:
                         logger.error(f"Error adding column {column_name}: {e}")
 
+            # Ensure any pre-existing rows have a clean fallback for username
+            cursor.execute("PRAGMA table_info(attack_logs)")
+            current_columns = [info[1] for info in cursor.fetchall()]
+            if "username" in current_columns:
+                cursor.execute("UPDATE attack_logs SET username = 'SYSTEM' WHERE username IS NULL OR username = ''")
+                conn.commit()
+
             # Route the INSERT through the DB Firewall
             timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            safe_username = str(username).strip() if username and str(username).strip() else "SYSTEM"
             insert_query = """
                 INSERT INTO attack_logs (
                     timestamp,
+                    username,
                     request,
                     attack_type,
                     confidence,
                     severity,
                     threat_score,
                     prediction_time_ms
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """
             # Sanitize the raw request string before persisting to the DB.
             # IMPORTANT: The BiLSTM model already received the raw payload
@@ -86,6 +98,7 @@ def log_attack(
 
             insert_params = (
                 timestamp_str,
+                safe_username,
                 safe_request,   # sanitized copy stored in DB
                 attack_type,
                 confidence,

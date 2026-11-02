@@ -1,0 +1,236 @@
+{
+  "model_path": "D:\\Amogh\\MCA\\DeepWAF-XAI\\model\\threat_model.h5",
+  "dataset_rows": 197756,
+  "test_samples": 19776,
+  "correct": 18311,
+  "incorrect": 1465,
+  "test_loss": 0.427,
+  "overall_accuracy": 0.9259,
+  "weighted_precision": 0.9714,
+  "weighted_recall": 0.9259,
+  "weighted_f1": 0.9432,
+  "macro_precision": 0.5823,
+  "macro_recall": 0.8943,
+  "macro_f1": 0.6593,
+  "classes": [
+    "LEGAL",
+    "PHISHING",
+    "SHELL",
+    "SQL",
+    "XSS"
+  ],
+  "per_class": {
+    "LEGAL": {
+      "precision": 0.9992,
+      "recall": 0.924,
+      "f1_score": 0.9601,
+      "support": 18290
+    },
+    "PHISHING": {
+      "precision": 0.9158,
+      "recall": 1.0,
+      "f1_score": 0.956,
+      "support": 500
+    },
+    "SHELL": {
+      "precision": 0.2889,
+      "recall": 0.8125,
+      "f1_score": 0.4262,
+      "support": 32
+    },
+    "SQL": {
+      "precision": 0.1455,
+      "recall": 0.7758,
+      "f1_score": 0.245,
+      "support": 165
+    },
+    "XSS": {
+      "precision": 0.5624,
+      "recall": 0.9594,
+      "f1_score": 0.7091,
+      "support": 789
+    }
+  },
+  "confusion_matrix": [
+    [
+      16900,
+      46,
+      50,
+      735,
+      559
+    ],
+    [
+      0,
+      500,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      26,
+      0,
+      6
+    ],
+    [
+      13,
+      0,
+      0,
+      128,
+      24
+    ],
+    [
+      1,
+      0,
+      14,
+      17,
+      757
+    ]
+  ],
+  "latency": {
+    "n_requests": 200,
+    "pred_mean_ms": 68.366,
+    "pred_median_ms": 56.587,
+    "pred_p95_ms": 113.411,
+    "pred_p99_ms": 125.245,
+    "e2e_mean_ms": 57.181,
+    "e2e_median_ms": 55.679,
+    "e2e_p95_ms": 66.416,
+    "e2e_p99_ms": 76.172
+  },
+  "training_history": {
+    "accuracy": [
+      0.8602817058563232,
+      0.9573980569839478,
+      0.9698330163955688,
+      0.9760920405387878,
+      0.973366379737854,
+      0.9785149097442627,
+      0.9781764149665833,
+      0.9814484715461731,
+      0.9852133989334106,
+      0.983271598815918
+    ],
+    "loss": [
+      0.5722209811210632,
+      0.27836620807647705,
+      0.21471816301345825,
+      0.17556557059288025,
+      0.18629617989063263,
+      0.14954499900341034,
+      0.134933203458786,
+      0.10986346751451492,
+      0.09775160998106003,
+      0.09267499297857285
+    ],
+    "val_accuracy": [
+      0.96760094165802,
+      0.9801425337791443,
+      0.9908788800239563,
+      0.9875059127807617,
+      0.9898337125778198,
+      0.9895961880683899,
+      0.9914489388465881,
+      0.9905463457107544,
+      0.9927790760993958,
+      0.9923040270805359
+    ],
+    "val_loss": [
+      0.14679357409477234,
+      0.07921655476093292,
+      0.05181896314024925,
+      0.06290873885154724,
+      0.04720824211835861,
+      0.04880242794752121,
+      0.03842246159911156,
+      0.04475658759474754,
+      0.032831016927957535,
+      0.03427978977560997
+    ],
+    "learning_rate": [
+      0.0010000000474974513,
+      0.0010000000474974513,
+      0.0010000000474974513,
+      0.0010000000474974513,
+      0.0010000000474974513,
+      0.0010000000474974513,
+      0.0010000000474974513,
+      0.0010000000474974513,
+      0.0010000000474974513,
+      0.0010000000474974513
+    ]
+  },
+  "security_feature_tests": [
+    {
+      "Feature": "SQL Injection Detection",
+      "Test Input": "' OR 1=1 --",
+      "Expected Outcome": "Attack detected (SQL)",
+      "Actual Outcome": "Predicted: SQL Injection (conf=1.00)",
+      "Status": "PASS"
+    },
+    {
+      "Feature": "XSS Detection",
+      "Test Input": "<script>alert('xss')</script>",
+      "Expected Outcome": "Attack detected (XSS)",
+      "Actual Outcome": "Predicted: Cross Site Scripting (conf=1.00)",
+      "Status": "PASS"
+    },
+    {
+      "Feature": "Path Traversal Detection",
+      "Test Input": "../../etc/passwd",
+      "Expected Outcome": "Attack detected (SHELL)",
+      "Actual Outcome": "Predicted: Path Traversal (conf=1.00)",
+      "Status": "PASS"
+    },
+    {
+      "Feature": "Phishing URL Detection",
+      "Test Input": "http://secure-bank.verify-paypal.cc/login?verify=1",
+      "Expected Outcome": "Attack detected (PHISHING)",
+      "Actual Outcome": "Predicted: Phishing URL (conf=1.00)",
+      "Status": "PASS"
+    },
+    {
+      "Feature": "Legitimate Request Pass-Through",
+      "Test Input": "GET /dashboard HTTP/1.1 username=alice",
+      "Expected Outcome": "LEGAL (no threat)",
+      "Actual Outcome": "Predicted: Normal (conf=1.00)",
+      "Status": "PASS"
+    },
+    {
+      "Feature": "Confidence Scoring",
+      "Test Input": "SELECT * FROM users WHERE id=1",
+      "Expected Outcome": "Confidence (0.0-1.0)",
+      "Actual Outcome": "Predicted: SQL Injection (conf=0.99)",
+      "Status": "PASS"
+    },
+    {
+      "Feature": "Threat Score \u2014 CRITICAL",
+      "Test Input": "severity=CRITICAL, conf=0.98",
+      "Expected Outcome": "Score in [0,1]",
+      "Actual Outcome": "Score=1.00",
+      "Status": "PASS"
+    },
+    {
+      "Feature": "Response Engine \u2014 BLOCK",
+      "Test Input": "severity=CRITICAL, conf=0.99",
+      "Expected Outcome": "BLOCK/BLOCKED",
+      "Actual Outcome": "action=BLOCKED, status=BLOCKED",
+      "Status": "PASS"
+    },
+    {
+      "Feature": "Response Engine \u2014 ALLOW",
+      "Test Input": "severity=LOW, attack=Normal, conf=0.99",
+      "Expected Outcome": "ALLOW/SAFE",
+      "Actual Outcome": "action=ALLOW, status=SAFE",
+      "Status": "PASS"
+    },
+    {
+      "Feature": "Quarantine Low Confidence",
+      "Test Input": "conf=0.55",
+      "Expected Outcome": "UNKNOWN/Quarantined",
+      "Actual Outcome": "quarantined=True, status=UNKNOWN",
+      "Status": "PASS"
+    }
+  ]
+}

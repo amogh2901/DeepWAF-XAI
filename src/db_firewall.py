@@ -14,8 +14,13 @@ class DBFirewall:
             
         # Forbidden SQL keywords that the application should never execute dynamically
         self.forbidden_patterns = [
-            r'\bDROP\b', r'\bALTER\b', r'\bTRUNCATE\b', 
-            r'\bDELETE\b', r'\bGRANT\b', r';\s*DROP', r';\s*DELETE'
+            r'\bDROP\b',
+            r'\bALTER\b',
+            r'\bTRUNCATE\b',
+            r'\bDELETE\b',
+            r'\bGRANT\b',
+            r';\s*DROP',
+            r';\s*DELETE'
         ]
         self._init_firewall_table()
 
