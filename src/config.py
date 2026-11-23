@@ -40,7 +40,16 @@ REPORT_PATH            = os.path.join(MODEL_DIR, "classification_report.txt")
 # ─────────────────────────────────────────────
 # Database Paths (Persistent & Environment-Configurable)
 # ─────────────────────────────────────────────
-DATABASE_DIR = os.getenv("DEEPWAF_DATABASE_DIR", os.path.join(BASE_DIR, "database"))
+_data_dir_candidate = os.getenv("DATA_DIR") or os.getenv("DEEPWAF_DATABASE_DIR")
+if not _data_dir_candidate:
+    _candidate = os.path.join(BASE_DIR, "database")
+    try:
+        os.makedirs(_candidate, exist_ok=True)
+        _data_dir_candidate = _candidate
+    except Exception:
+        _data_dir_candidate = "/tmp/deepwaf_data"
+
+DATABASE_DIR = _data_dir_candidate
 os.makedirs(DATABASE_DIR, exist_ok=True)
 LOGS_DB_PATH  = os.getenv("DEEPWAF_LOGS_DB_PATH", os.path.join(DATABASE_DIR, "logs.db"))
 USERS_DB_PATH = os.getenv("DEEPWAF_USERS_DB_PATH", os.path.join(DATABASE_DIR, "users.db"))

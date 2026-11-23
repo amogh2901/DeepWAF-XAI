@@ -7,25 +7,25 @@
 tensorflow-cpu>=2.15.0,<3.0.0      # DL framework (CPU-optimized for cloud deployment)
 numpy>=1.24.0,<2.0.0; python_version < "3.13" # Numerical computing (NumPy 1.x for Python <= 3.12)
 numpy>=2.1.0; python_version >= "3.13"        # Numerical computing (NumPy 2.x required for Python 3.13+)
-scipy>=1.11.0                       # Scientific computing (temperature scaling)
+# scipy>=1.11.0                       # Scientific computing (optional)
 
 # ── Data & ML Utilities ─────────────────────────────────────────────────────
 pandas>=2.0.0                       # Data manipulation
 scikit-learn>=1.3.0                 # train_test_split, metrics, class weights
-matplotlib>=3.7.0                   # Training history plots
-seaborn>=0.12.0                     # Confusion matrix heatmap
+# matplotlib>=3.7.0                   # Training history plots (optional)
+# seaborn>=0.12.0                     # Confusion matrix heatmap (optional)
 
 # ── Web Application ──────────────────────────────────────────────────────────
 streamlit>=1.28.0                   # Main UI framework
 streamlit-autorefresh>=0.0.1        # Auto-refresh for dashboard
 plotly>=5.17.0                      # Interactive charts (gauge, pie, geo)
 
-# ── REST API ──────────────────────────────────────────────────────────────────
-flask>=3.0.0                        # Flask API server
-flask-cors>=4.0.0                   # CORS for browser extension
-fastapi>=0.104.0                    # WAF middleware server
-uvicorn>=0.24.0                     # ASGI server for FastAPI
-jinja2>=3.1.0                       # HTML templates
+# ── REST API (Optional Standalone Demo Servers) ──────────────────────────────
+# flask>=3.0.0                        # Flask API server
+# flask-cors>=4.0.0                   # CORS for browser extension
+# fastapi>=0.104.0                    # WAF middleware server
+# uvicorn>=0.24.0                     # ASGI server for FastAPI
+# jinja2>=3.1.0                       # HTML templates
 
 # ── Database ──────────────────────────────────────────────────────────────────
 # sqlite3 is part of Python standard library — no install needed

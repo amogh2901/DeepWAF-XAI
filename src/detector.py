@@ -4,7 +4,19 @@ import pickle
 import urllib.parse
 import ipaddress
 import numpy as np
-import tensorflow as tf
+
+def _pad_sequences_numpy(sequences, maxlen=200, padding='post', truncating='post', value=0):
+    """Pure NumPy padding implementation to avoid loading tf.keras.preprocessing."""
+    result = np.full((len(sequences), maxlen), value, dtype=np.int32)
+    for i, seq in enumerate(sequences):
+        if not seq:
+            continue
+        s = seq[:maxlen] if truncating == 'post' else seq[-maxlen:]
+        if padding == 'post':
+            result[i, :len(s)] = s
+        else:
+            result[i, -len(s):] = s
+    return result
 
 # Cache for loaded resources
 _resources = None
@@ -13,7 +25,7 @@ def load_resources():
     """
     Loads model, tokenizer, label encoder, classes, and max_sequence_length.
     Uses project root directory to locate the 'model' folder.
-    Caches resources to avoid reloading.
+    Caches resources to avoid reloading. Lazy-imports TensorFlow to minimize memory.
     """
     global _resources
 
@@ -26,6 +38,20 @@ def load_resources():
 
     if _resources is not None:
         return _resources
+
+    # Low-memory configuration for cloud deployment (256MB container limit)
+    os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
+    os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
+    os.environ.setdefault("TF_NUM_INTRAOP_THREADS", "1")
+    os.environ.setdefault("TF_NUM_INTEROP_THREADS", "1")
+
+    import tensorflow as tf
+    try:
+        tf.config.threading.set_inter_op_parallelism_threads(1)
+        tf.config.threading.set_intra_op_parallelism_threads(1)
+    except Exception:
+        pass
 
     # Determine project root directory
     PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -257,7 +283,7 @@ def detect_attack(payload):
     # Tokenize and pad
     try:
         sequences = tokenizer.texts_to_sequences(chunks)
-        padded_seq = tf.keras.preprocessing.sequence.pad_sequences(
+        padded_seq = _pad_sequences_numpy(
             sequences,
             maxlen=max_sequence_length,
             padding='post',

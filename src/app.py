@@ -1,15 +1,41 @@
+import os
 import sys
 from pathlib import Path
+
+# Safeguard container runtime permissions: ensure writable HOME and disable metrics write
+if os.environ.get("HOME") in (None, "", "/"):
+    os.environ["HOME"] = "/tmp"
+os.environ["STREAMLIT_BROWSER_GATHER_USAGE_STATS"] = "false"
+os.environ["MPLCONFIGDIR"] = "/tmp/matplotlib"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["TF_NUM_INTRAOP_THREADS"] = "1"
+os.environ["TF_NUM_INTEROP_THREADS"] = "1"
+try:
+    Path("/tmp/.streamlit").mkdir(parents=True, exist_ok=True)
+    Path("/tmp/matplotlib").mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 
 # Set project root path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # Ensure database directory exists
-DB_DIR = PROJECT_ROOT / "database"
+_candidate_data_dir = os.getenv("DATA_DIR") or os.getenv("DEEPWAF_DATABASE_DIR")
+if not _candidate_data_dir:
+    _candidate = PROJECT_ROOT / "database"
+    try:
+        _candidate.mkdir(parents=True, exist_ok=True)
+        _candidate_data_dir = str(_candidate)
+    except Exception:
+        _candidate_data_dir = "/tmp/deepwaf_data"
+
+DB_DIR = Path(_candidate_data_dir)
 DB_DIR.mkdir(parents=True, exist_ok=True)
 
 # Path to logs database
-DB_PATH = DB_DIR / "logs.db"
+DB_PATH = Path(os.getenv("DEEPWAF_LOGS_DB_PATH", str(DB_DIR / "logs.db")))
 
 # Append to sys path for module imports
 sys.path.append(str(PROJECT_ROOT))
@@ -1014,6 +1040,19 @@ if not st.session_state.get("authenticated", False):
                     else:
                         st.error(f"❌ {r_msg}")
 
+        # Project Team Footer on Login Page
+        st.markdown(
+            """
+            <div style="margin-top: 36px; text-align: center; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 11px; color: #64748B;">
+                <div style="color: #00DFD8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 4px; font-size: 10px;">PROJECT TEAM</div>
+                <div style="color: #F1F5F9; font-weight: 600;">Amogh Pradeep Kalyanshetti <span style="color: #64748B; font-weight: 400;">(Project Lead)</span></div>
+                <div style="color: #94A3B8; margin-top: 2px;">Vikas Bhosale &nbsp;•&nbsp; Aditya Chorghe</div>
+                <div style="color: #475569; font-size: 10px; margin-top: 6px;">DeepWAF-XAI · MCA Final-Year Capstone Project</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
     # Stop rendering remainder of the app until authenticated
     st.stop()
 
@@ -1091,6 +1130,29 @@ if st.sidebar.button("🚪 Logout", use_container_width=True, key="btn_sidebar_l
         st.session_state.pop(key, None)
     st.session_state.clear()
     st.rerun()
+
+# ── Sidebar Team Attribution ────────────────────────────────────────────────
+st.sidebar.markdown(
+    """
+    <div style="margin-top: 20px; padding: 12px 14px; background: rgba(255, 255, 255, 0.02); border: 1px solid #1E293B; border-radius: 10px; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 11px;">
+        <div style="color: #00DFD8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 6px; font-size: 10px;">Project Team</div>
+        <div style="color: #F1F5F9; font-weight: 600; margin-bottom: 2px; font-size: 11px;">
+            <span style="display:inline-block; width:5px; height:5px; border-radius:50%; background:#00DFD8; margin-right:5px; vertical-align:middle;"></span>
+            Amogh Pradeep Kalyanshetti
+        </div>
+        <div style="color: #64748B; font-size: 9.5px; margin-left: 10px; margin-bottom: 6px;">Project Lead</div>
+        <div style="color: #94A3B8; font-size: 11px; margin-bottom: 2px;">
+            <span style="display:inline-block; width:4px; height:4px; border-radius:50%; background:#475569; margin-right:5px; vertical-align:middle;"></span>
+            Vikas Bhosale
+        </div>
+        <div style="color: #94A3B8; font-size: 11px;">
+            <span style="display:inline-block; width:4px; height:4px; border-radius:50%; background:#475569; margin-right:5px; vertical-align:middle;"></span>
+            Aditya Chorghe
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # ── Page-change tracker — reset Level-2 OTP on genuine navigation only ────────
 # This block runs once per Streamlit rerun (every interaction OR autorefresh).
@@ -3179,6 +3241,90 @@ elif page == "📊 Security Dashboard":
             )
     else:
         st.warning("🔒 Level 2 Quarantine & Unknown Threat Management requires Administrator privileges. Your current role (TESTER) is restricted to read-only analytics.")
+
+
+# ---------------- Global Project Footer ----------------
+st.markdown(
+    """
+    <div style="
+        margin-top: 50px;
+        margin-bottom: 20px;
+        padding: 22px 28px;
+        background: linear-gradient(180deg, #101827 0%, #0A0E17 100%);
+        border: 1px solid #1E293B;
+        border-top: 2px solid #00DFD8;
+        border-radius: 14px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    ">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px;">
+            <div>
+                <div style="
+                    font-family: 'JetBrains Mono', Consolas, monospace;
+                    font-size: 11px;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.16em;
+                    color: #00DFD8;
+                    margin-bottom: 8px;
+                ">
+                    PROJECT TEAM
+                </div>
+                <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 28px;">
+                    <div>
+                        <span style="
+                            font-family: 'JetBrains Mono', Consolas, monospace;
+                            font-size: 10px;
+                            font-weight: 600;
+                            text-transform: uppercase;
+                            letter-spacing: 0.08em;
+                            color: #64748B;
+                            display: block;
+                            margin-bottom: 3px;
+                        ">Project Lead</span>
+                        <span style="
+                            font-size: 13.5px;
+                            font-weight: 600;
+                            color: #F1F5F9;
+                        ">
+                            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #00DFD8; margin-right: 6px; vertical-align: middle;"></span>
+                            Amogh Pradeep Kalyanshetti
+                        </span>
+                    </div>
+                    <div>
+                        <span style="
+                            font-family: 'JetBrains Mono', Consolas, monospace;
+                            font-size: 10px;
+                            font-weight: 600;
+                            text-transform: uppercase;
+                            letter-spacing: 0.08em;
+                            color: #64748B;
+                            display: block;
+                            margin-bottom: 3px;
+                        ">Team Members</span>
+                        <span style="
+                            font-size: 13.5px;
+                            font-weight: 400;
+                            color: #94A3B8;
+                        ">
+                            <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #475569; margin-right: 6px; vertical-align: middle;"></span>
+                            Vikas Bhosale
+                            <span style="margin: 0 12px; color: #334155;">•</span>
+                            <span style="display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #475569; margin-right: 6px; vertical-align: middle;"></span>
+                            Aditya Chorghe
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: right; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 11px; color: #64748B;">
+                <div style="color: #94A3B8; font-weight: 600; font-size: 12px; letter-spacing: -0.2px;">DeepWAF-XAI Security Platform</div>
+                <div style="margin-top: 3px; color: #64748B;">MCA Final-Year Capstone Project</div>
+            </div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 
 
 

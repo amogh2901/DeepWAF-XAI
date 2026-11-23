@@ -52,7 +52,16 @@ logger = logging.getLogger(__name__)
 
 # ── Database path (mirrors the convention used in logger.py / db_firewall.py) ──
 _BASE_DIR = Path(__file__).resolve().parent.parent
-DB_PATH = _BASE_DIR / "database" / "logs.db"
+_candidate_data_dir = os.getenv("DATA_DIR") or os.getenv("DEEPWAF_DATABASE_DIR")
+if not _candidate_data_dir:
+    _candidate = _BASE_DIR / "database"
+    try:
+        _candidate.mkdir(parents=True, exist_ok=True)
+        _candidate_data_dir = str(_candidate)
+    except Exception:
+        _candidate_data_dir = "/tmp/deepwaf_data"
+
+DB_PATH = Path(os.getenv("DEEPWAF_LOGS_DB_PATH", str(Path(_candidate_data_dir) / "logs.db")))
 
 # ── Confidence threshold: predictions below this are quarantined ───────────────
 QUARANTINE_THRESHOLD: float = 0.65

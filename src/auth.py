@@ -19,7 +19,16 @@ logger = logging.getLogger(__name__)
 
 # Database path (database/users.db)
 _BASE_DIR = Path(__file__).resolve().parent.parent
-USERS_DB_PATH = Path(os.getenv("DEEPWAF_USERS_DB_PATH", str(_BASE_DIR / "database" / "users.db")))
+_candidate_data_dir = os.getenv("DATA_DIR") or os.getenv("DEEPWAF_DATABASE_DIR")
+if not _candidate_data_dir:
+    _candidate = _BASE_DIR / "database"
+    try:
+        _candidate.mkdir(parents=True, exist_ok=True)
+        _candidate_data_dir = str(_candidate)
+    except Exception:
+        _candidate_data_dir = "/tmp/deepwaf_data"
+
+USERS_DB_PATH = Path(os.getenv("DEEPWAF_USERS_DB_PATH", str(Path(_candidate_data_dir) / "users.db")))
 DB_PATH = USERS_DB_PATH
 
 # Master SuperAdmin configuration

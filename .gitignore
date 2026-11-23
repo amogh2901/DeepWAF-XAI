@@ -61,3 +61,8 @@ ehthumbs.db
 *.bak
 *.swp
 *.swo
+
+# Deployment scratch files
+deploy_embarko.py
+embarko.json
+

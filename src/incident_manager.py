@@ -61,7 +61,16 @@ logger = logging.getLogger(__name__)
 
 # Base database path
 _BASE_DIR = Path(__file__).resolve().parent.parent
-DB_PATH = _BASE_DIR / "database" / "logs.db"
+_candidate_data_dir = os.getenv("DATA_DIR") or os.getenv("DEEPWAF_DATABASE_DIR")
+if not _candidate_data_dir:
+    _candidate = _BASE_DIR / "database"
+    try:
+        _candidate.mkdir(parents=True, exist_ok=True)
+        _candidate_data_dir = str(_candidate)
+    except Exception:
+        _candidate_data_dir = "/tmp/deepwaf_data"
+
+DB_PATH = Path(os.getenv("DEEPWAF_LOGS_DB_PATH", str(Path(_candidate_data_dir) / "logs.db")))
 
 # Valid incident lifecycle statuses
 VALID_STATUSES = ["PENDING", "REPORTED", "UNDER_REVIEW", "RESOLVED", "REPORT_FAILED"]

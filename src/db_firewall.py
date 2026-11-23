@@ -6,11 +6,19 @@ import os
 class DBFirewall:
     def __init__(self, db_path=None):
         if db_path is None:
-            # Default to the existing database folder
+            # Default to the existing database folder or environment configuration
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            self.db_path = os.path.join(base_dir, 'database', 'logs.db')
+            candidate = os.getenv("DATA_DIR") or os.getenv("DEEPWAF_DATABASE_DIR")
+            if not candidate:
+                candidate = os.path.join(base_dir, 'database')
+                try:
+                    os.makedirs(candidate, exist_ok=True)
+                except Exception:
+                    candidate = "/tmp/deepwaf_data"
+            self.db_path = os.getenv("DEEPWAF_LOGS_DB_PATH", os.path.join(candidate, 'logs.db'))
         else:
             self.db_path = db_path
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
             
         # Forbidden SQL keywords that the application should never execute dynamically
         self.forbidden_patterns = [
